@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "esnext", // which version of JS to compile down to
+    "module": "esnext", // how to interpret imports/exports
+    "lib": ["esnext"], // which built-in JS APIs are available (e.g. Promise, Array methods)
+    "moduleResolution": "bundler", // how TypeScript resolves import paths (mimics how bundlers do it)
+    "strict": true, // enable all strict type-checking rules (catches more bugs)
+    "esModuleInterop": true, // allows default imports from CommonJS modules (e.g. import express from "express")
+    "skipLibCheck": true // skip type-checking inside node_modules (faster compilation)
+  }
+}

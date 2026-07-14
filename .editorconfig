@@ -1,0 +1,10 @@
+# tell EditorConfig this is the root configuration file 
+root = true
+
+# apply these rules to all files in the project
+[*]
+# use spaces for indentation instead of tabs
+indent_style = space
+
+# set indentation to 2 spaces per level
+indent_size = 2
