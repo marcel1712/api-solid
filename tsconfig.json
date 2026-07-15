@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["node"],
     "target": "esnext", // which version of JS to compile down to
     "module": "esnext", // how to interpret imports/exports
     "lib": ["esnext"], // which built-in JS APIs are available (e.g. Promise, Array methods)
