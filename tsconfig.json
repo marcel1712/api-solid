@@ -2,7 +2,8 @@
   "compilerOptions": {
     "types": ["node"],
     "paths": {
-      "@prisma/client": ["./generated/prisma/client"]
+      "@prisma/client": ["./generated/prisma/client"],
+      "@/*": ["./src/*"]
     },
     "target": "esnext", // which version of JS to compile down to
     "module": "esnext", // how to interpret imports/exports
