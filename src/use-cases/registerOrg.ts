@@ -24,7 +24,8 @@ export class RegisterOrgUseCase {
       throw new Error("This email is already registered");
     }
 
-    const password_hash: string = request.password; //string = await hash('s0/\/\P4$$w0rD', 10)
+    // const password_hash: string = request.password; //string = await hash('s0/\/\P4$$w0rD', 10)
+    const password_hash: string = await hash(request.password, 10);
 
     const org: Org = await this.OrgRepository.create({
       name: request.name,

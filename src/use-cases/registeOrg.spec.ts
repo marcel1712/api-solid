@@ -2,9 +2,8 @@ import { OrgRepository } from "../repositories/org-repository";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
 import { RegisterOrgUseCase } from "./registerOrg";
 import { describe, it, expect, beforeEach } from "vitest";
-import test from "node:test";
 
-let orgRepository: InMemoryOrgRepository;
+let orgRepository: OrgRepository;
 let sut: RegisterOrgUseCase;
 
 describe("Register Org Use Case", () => {
@@ -62,5 +61,18 @@ describe("Register Org Use Case", () => {
     ).rejects.toThrow();
   });
 
-  it;
+  it("should create a id for the org", async () => {
+    const { org } = await sut.execute({
+      name: "Pet Friends ",
+      email: "petfriends@email.com",
+      password: "password123",
+      whatsapp: "11999999999",
+      city: "São Paulo",
+      address: "Rua das Flores, 123",
+    });
+
+    expect(org.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
+  });
 });
