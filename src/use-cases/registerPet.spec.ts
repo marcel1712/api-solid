@@ -41,7 +41,7 @@ describe("Register Pet Use Case", () => {
       size: "Small",
       type: "Dog",
       bio: "...",
-      orgEmail: org.email,
+      orgId: org.id,
     });
 
     expect(pet.id).toEqual(expect.any(String));
@@ -56,7 +56,7 @@ describe("Register Pet Use Case", () => {
       size: "Small",
       type: "Dog",
       bio: "...",
-      orgEmail: org.email,
+      orgId: org.id,
     });
 
     expect(pet.id).toMatch(
@@ -73,7 +73,7 @@ describe("Register Pet Use Case", () => {
       size: "Small",
       type: "Dog",
       bio: "A very good boy",
-      orgEmail: org.email,
+      orgId: org.id,
     });
 
     expect(pet).toEqual(
@@ -97,7 +97,7 @@ describe("Register Pet Use Case", () => {
       size: "Small",
       type: "Dog",
       bio: "...",
-      orgEmail: org.email,
+      orgId: org.id,
     });
 
     expect(pet.orgId).toEqual(org.id);
@@ -112,10 +112,24 @@ describe("Register Pet Use Case", () => {
       size: "Small",
       type: "Dog",
       bio: "...",
-      orgEmail: org.email,
+      orgId: org.id,
     });
 
     expect(pet.adopted).toEqual(false);
+  });
+
+  it("should be able to register a pet without a bio", async () => {
+    const org = await createOrg();
+
+    const { pet } = await sut.execute({
+      name: "Nick",
+      age: 9,
+      size: "Small",
+      type: "Dog",
+      orgId: org.id,
+    });
+
+    expect(pet.bio).toBeNull();
   });
 
   it("should not be able to register a pet for a non-existing org", async () => {
@@ -126,7 +140,7 @@ describe("Register Pet Use Case", () => {
         size: "Small",
         type: "Dog",
         bio: "...",
-        orgEmail: "nonexisting-org@email.com",
+        orgId: "non-existing-org-id",
       }),
     ).rejects.toThrow(new Error("This org doesnt exist"));
   });
@@ -140,7 +154,7 @@ describe("Register Pet Use Case", () => {
       size: "Small",
       type: "Dog",
       bio: "...",
-      orgEmail: org.email,
+      orgId: org.id,
     });
 
     const { pet: secondPet } = await sut.execute({
@@ -149,7 +163,7 @@ describe("Register Pet Use Case", () => {
       size: "Medium",
       type: "Cat",
       bio: "...",
-      orgEmail: org.email,
+      orgId: org.id,
     });
 
     expect(firstPet.id).not.toEqual(secondPet.id);

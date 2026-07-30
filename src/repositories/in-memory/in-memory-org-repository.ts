@@ -15,6 +15,16 @@ export class InMemoryOrgRepository implements OrgRepository {
     }
   }
 
+  async findById(id: string) {
+    const org = this.items.find((item) => item.id === id);
+
+    if (!org) {
+      return null;
+    } else {
+      return org;
+    }
+  }
+
   async create(data: Prisma.OrgCreateInput) {
     const org = {
       id: randomUUID(),

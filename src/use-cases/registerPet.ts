@@ -4,11 +4,11 @@ import { OrgRepository } from "@/repositories/org-repository";
 
 interface RegisterPetRequest {
   name: string;
-  orgEmail: string;
+  orgId: string;
   age: number;
   size: AnimalSize;
   type: AnimalType;
-  bio: string;
+  bio?: string;
 }
 
 interface RegisterPetResponse {
@@ -22,7 +22,7 @@ export class RegisterPetUseCase {
   ) {}
 
   async execute(request: RegisterPetRequest): Promise<RegisterPetResponse> {
-    const org = await this.orgRepository.findByEmail(request.orgEmail);
+    const org = await this.orgRepository.findById(request.orgId);
     if (!org) {
       throw new Error("This org doesnt exist");
     }
@@ -32,7 +32,7 @@ export class RegisterPetUseCase {
       age: request.age,
       size: request.size,
       type: request.type,
-      bio: request.bio,
+      bio: request.bio || null,
       org: { connect: { id: org.id } },
     });
 
