@@ -1,35 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { PetRepository } from "../pet-repository";
-import { Pet, Prisma } from "@prisma/client";
+import { AnimalSize, AnimalType, Org, Pet, Prisma } from "@prisma/client";
 
 export class InMemoryPetRepository implements PetRepository {
   public items: Pet[] = [];
-
-  async findById(id: string): Promise<Pet | null> {
-    const pet = this.items.find((pet) => pet.id == id) || null;
-    return pet;
-  }
-  // async findByAge(age: number): Promise<Pet[] | null> {
-  //   console.log("hy");
-  // }
-
-  // async viewDetails(id: string): Promise<Pet | null> {
-  //   console.log("opa");
-  // }
-
-  async updateAdoptionStatus(
-    id: string,
-    adopted: boolean,
-  ): Promise<Pet | null> {
-    const pet = await this.findById(id);
-    if (!pet) {
-      return null;
-    }
-
-    pet.adopted = adopted;
-
-    return pet;
-  }
 
   async create(data: Prisma.PetCreateInput) {
     const orgId = data.org.connect?.id;
@@ -52,5 +26,49 @@ export class InMemoryPetRepository implements PetRepository {
     this.items.push(pet);
 
     return pet;
+  }
+
+  async findById(id: string): Promise<Pet | null> {
+    const pet = this.items.find((pet) => pet.id == id) || null;
+    return pet;
+  }
+
+  async updateAdoptionStatus(
+    id: string,
+    adopted: boolean,
+  ): Promise<Pet | null> {
+    const pet = await this.findById(id);
+    if (!pet) {
+      return null;
+    }
+
+    pet.adopted = adopted;
+
+    return pet;
+  }
+
+  async findManyByOrgIds(
+    orgs: Org[],
+    filters: { age?: number; size?: AnimalSize; type?: AnimalType },
+  ): Promise<Pet[]> {
+    const orgIds = orgs.map((org) => org.id);
+
+    const pets = this.items.filter((pet) => {
+      if (!orgIds.includes(pet.orgId)) {
+        return false;
+      }
+      if (filters.age !== undefined && pet.age !== filters.age) {
+        return false;
+      }
+      if (filters.size !== undefined && pet.size !== filters.size) {
+        return false;
+      }
+      if (filters.type !== undefined && pet.type !== filters.type) {
+        return false;
+      }
+      return true;
+    });
+
+    return pets;
   }
 }

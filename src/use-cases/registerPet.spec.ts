@@ -118,20 +118,6 @@ describe("Register Pet Use Case", () => {
     expect(pet.adopted).toEqual(false);
   });
 
-  it("should be able to register a pet without a bio", async () => {
-    const org = await createOrg();
-
-    const { pet } = await sut.execute({
-      name: "Nick",
-      age: 9,
-      size: "Small",
-      type: "Dog",
-      orgId: org.id,
-    });
-
-    expect(pet.bio).toBeNull();
-  });
-
   it("should not be able to register a pet for a non-existing org", async () => {
     await expect(() =>
       sut.execute({

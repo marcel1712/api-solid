@@ -1,8 +1,10 @@
-import { Prisma, Pet } from "@prisma/client";
+import { Prisma, Pet, AnimalSize, AnimalType, Org } from "@prisma/client";
 
 export interface PetRepository {
-  //findManyByCity
-  // findByAge(age: number): Promise<Pet[] | null>;
+  findManyByOrgIds(
+    orgs: Org[],
+    filters: { age?: number; size?: AnimalSize; type?: AnimalType },
+  ): Promise<Pet[]>;
   findById(id: string): Promise<Pet | null>;
   updateAdoptionStatus(id: string, adopted: boolean): Promise<Pet | null>;
   create(data: Prisma.PetCreateInput): Promise<Pet>;
