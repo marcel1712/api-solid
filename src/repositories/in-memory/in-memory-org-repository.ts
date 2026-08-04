@@ -1,4 +1,4 @@
-import { OrgRepository } from "../org-repository";
+import { OrgRepository } from "@/repositories/org-repository";
 import { Org, Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
