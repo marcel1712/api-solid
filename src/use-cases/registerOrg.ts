@@ -1,4 +1,4 @@
-import { OrgRepository } from "../repositories/org-repository";
+import { OrgRepository } from "@/repositories/org-repository";
 import { Org } from "@prisma/client";
 import { hash } from "bcrypt";
 

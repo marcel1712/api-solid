@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { PetRepository } from "../pet-repository";
+import { PetRepository } from "@/repositories/pet-repository";
 import { AnimalSize, AnimalType, Org, Pet, Prisma } from "@prisma/client";
 
 export class InMemoryPetRepository implements PetRepository {
