@@ -1,7 +1,8 @@
-import { RegisterOrgUseCase } from "@/use-cases/registerOrg";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { email, string, z } from "zod";
+import { z } from "zod";
 import { makeRegisterOrgUseCase } from "@/use-cases/factories/make-register-org-use-case";
+import { generateOrgTokens } from "@/http/utils/generate-org-tokens";
+import env from "@/env/env";
 
 export async function registerOrgController(
   request: FastifyRequest,
@@ -20,16 +21,36 @@ export async function registerOrgController(
     createOrgBodyScheme.parse(request.body);
 
   const registerOrgUseCase = makeRegisterOrgUseCase();
-  const { org } = await registerOrgUseCase.execute({
-    name,
-    email,
-    password,
-    whatsapp,
-    city,
-    address,
-  });
 
-  const { password_hash, ...publicOrg } = org;
+  try {
+    const { org } = await registerOrgUseCase.execute({
+      name,
+      email,
+      password,
+      whatsapp,
+      city,
+      address,
+    });
+    
+    const { token, refreshToken } = await generateOrgTokens(org.id);
+    
+    const { password_hash, ...publicOrg } = org;
 
-  return reply.status(201).send(publicOrg);
+
+
+  return reply
+    .status(201)
+    .setCookie("refreshToken", refreshToken, {
+      path: "/",
+      secure: env.NODE_ENV === "production",
+      sameSite: true,
+      httpOnly: true,
+    })
+    .send({
+      ...publicOrg,
+      token,
+    });
+  } catch {
+    return reply.status(409).send({ error: "Unable to register with the provided information" });
+  }
 }

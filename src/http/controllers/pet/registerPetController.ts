@@ -25,19 +25,23 @@ export async function registerPetController(
     bio: z.string().optional(),
   });
 
-  const { name, orgId, age, size, type, bio } = createPetBodyScheme.parse(
-    request.body,
-  );
+  try{
+    const { name, orgId, age, size, type, bio } = createPetBodyScheme.parse(
+      request.body,
+    );
 
-  const registerPetUseCase = makeRegisterPetUseCase();
-  const { pet } = await registerPetUseCase.execute({
-    name,
-    orgId,
-    age,
-    size,
-    type,
-    bio,
-  });
+    const registerPetUseCase = makeRegisterPetUseCase();
+    const { pet } = await registerPetUseCase.execute({
+      name,
+      orgId,
+      age,
+      size,
+      type,
+      bio,
+    });
 
-  return reply.status(201).send(pet);
+    return reply.status(201).send(pet);
+  } catch (err) {
+    return reply.status(409).send({ error: "Unable to register with the provided information" });
+  }
 }

@@ -15,13 +15,17 @@ interface AuthenticatedOrg {
 
 export class AuthenticateOrgUseCase {
   constructor(private orgRepository: OrgRepository) {}
+
+
   async execute(request: AuthenticateOrgRequest): Promise<AuthenticatedOrg> {
     const org = await this.orgRepository.findByEmail(request.email);
+
     if (!org) {
       throw new Error(
         "Authentication error verify if the email or password is correct",
       );
     }
+    
     const passwordMatches = await compare(request.password, org.password_hash);
 
     if (!passwordMatches) {
