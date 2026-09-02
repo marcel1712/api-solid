@@ -41,6 +41,7 @@ export async function registerPetController(
     });
 
     return reply.status(201).send(pet);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     return reply.status(409).send({ error: "Unable to register with the provided information" });
   }
