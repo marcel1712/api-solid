@@ -49,6 +49,7 @@ export class InMemoryPetRepository implements PetRepository {
 
   async findManyByOrgIds(
     orgs: Org[],
+    page: number,
     filters: { age?: number; size?: AnimalSize; type?: AnimalType },
   ): Promise<Pet[]> {
     const orgIds = orgs.map((org) => org.id);
@@ -69,6 +70,7 @@ export class InMemoryPetRepository implements PetRepository {
       return true;
     });
 
-    return pets;
+    const PAGE_SIZE = 20;
+    return pets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   }
 }

@@ -57,7 +57,7 @@ describe("Fetch Pet By City Use Case", () => {
     const org = await createOrg({ city: "São Paulo" });
     await createPet(org.id);
 
-    const pets = await sut.execute({ city: "São Paulo" });
+    const pets = await sut.execute({ city: "São Paulo", page: 1 });
 
     expect(pets).toHaveLength(1);
   });
@@ -68,7 +68,7 @@ describe("Fetch Pet By City Use Case", () => {
     await createPet(firstOrg.id, { name: "Nick" });
     await createPet(secondOrg.id, { name: "Mimi" });
 
-    const pets = await sut.execute({ city: "São Paulo" });
+    const pets = await sut.execute({ city: "São Paulo", page: 1 });
 
     expect(pets).toHaveLength(2);
   });
@@ -79,7 +79,7 @@ describe("Fetch Pet By City Use Case", () => {
     await createPet(spOrg.id, { name: "Nick" });
     await createPet(rjOrg.id, { name: "Mimi" });
 
-    const pets = await sut.execute({ city: "São Paulo" });
+    const pets = await sut.execute({ city: "São Paulo", page: 1 });
 
     expect(pets).toHaveLength(1);
     expect(pets?.[0].name).toEqual("Nick");
@@ -89,13 +89,13 @@ describe("Fetch Pet By City Use Case", () => {
     const org = await createOrg({ city: "São Paulo" });
     await createPet(org.id);
 
-    const pets = await sut.execute({ city: "Curitiba" });
+    const pets = await sut.execute({ city: "Curitiba", page: 1 });
 
     expect(pets).toHaveLength(0);
   });
 
   it("should not be able to fetch pets without a city", async () => {
-    await expect(() => sut.execute({ city: "" })).rejects.toThrow(
+    await expect(() => sut.execute({ city: "", page: 1 })).rejects.toThrow(
       new Error("City is required"),
     );
   });
@@ -103,7 +103,7 @@ describe("Fetch Pet By City Use Case", () => {
   it("should return an empty list when the city has orgs but no pets", async () => {
     await createOrg({ city: "São Paulo" });
 
-    const pets = await sut.execute({ city: "São Paulo" });
+    const pets = await sut.execute({ city: "São Paulo", page: 1 });
 
     expect(pets).toHaveLength(0);
   });
@@ -113,7 +113,7 @@ describe("Fetch Pet By City Use Case", () => {
     await createPet(org.id, { name: "Nick", age: 2 });
     await createPet(org.id, { name: "Mimi", age: 9 });
 
-    const pets = await sut.execute({ city: "São Paulo", age: 2 });
+    const pets = await sut.execute({ city: "São Paulo", age: 2, page: 1 });
 
     expect(pets).toHaveLength(1);
     expect(pets?.[0].name).toEqual("Nick");
@@ -124,7 +124,7 @@ describe("Fetch Pet By City Use Case", () => {
     await createPet(org.id, { name: "Nick", size: "Small" });
     await createPet(org.id, { name: "Mimi", size: "Large" });
 
-    const pets = await sut.execute({ city: "São Paulo", size: "Large" });
+    const pets = await sut.execute({ city: "São Paulo", size: "Large", page: 1 });
 
     expect(pets).toHaveLength(1);
     expect(pets?.[0].name).toEqual("Mimi");
@@ -135,7 +135,7 @@ describe("Fetch Pet By City Use Case", () => {
     await createPet(org.id, { name: "Nick", type: "Dog" });
     await createPet(org.id, { name: "Mimi", type: "Cat" });
 
-    const pets = await sut.execute({ city: "São Paulo", type: "Cat" });
+    const pets = await sut.execute({ city: "São Paulo", type: "Cat", page: 1 });
 
     expect(pets).toHaveLength(1);
     expect(pets?.[0].name).toEqual("Mimi");
@@ -151,6 +151,7 @@ describe("Fetch Pet By City Use Case", () => {
       type: "Dog",
       size: "Small",
       age: 2,
+      page: 1,
     });
 
     expect(pets).toHaveLength(1);
@@ -161,7 +162,7 @@ describe("Fetch Pet By City Use Case", () => {
     const org = await createOrg({ city: "São Paulo" });
     await createPet(org.id, { type: "Dog" });
 
-    const pets = await sut.execute({ city: "São Paulo", type: "Cat" });
+    const pets = await sut.execute({ city: "São Paulo", type: "Cat", page: 1 });
 
     expect(pets).toHaveLength(0);
   });

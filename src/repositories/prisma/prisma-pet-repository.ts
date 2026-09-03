@@ -14,9 +14,11 @@ export class PrismaPetRepository implements PetRepository {
 
   async findManyByOrgIds(
     orgs: Org[],
+    page: number,
     filters: { age?: number; size?: AnimalSize; type?: AnimalType },
   ): Promise<Pet[]> {
     const orgsIds = orgs.map((org) => org.id);
+    const PAGE_SIZE = 20;
 
     return this.prisma.pet.findMany({
       where: {
@@ -25,6 +27,8 @@ export class PrismaPetRepository implements PetRepository {
         size: filters.size,
         type: filters.type,
       },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
     });
   }
 

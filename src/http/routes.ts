@@ -3,6 +3,7 @@ import { registerPetController } from "@/http/controllers/pet/registerPetControl
 import { getPetDetailsController } from "@/http/controllers/pet/getPetDetailsController";
 import { FastifyInstance } from "fastify";
 import { authenticateOrgController } from "./controllers/org/authenticateOrgController";
+import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityController";
 
 export async function orgRoutes(app: FastifyInstance) {
   app.post("/", registerOrgController);
@@ -12,4 +13,5 @@ export async function orgRoutes(app: FastifyInstance) {
 export async function petRoutes(app: FastifyInstance) {
   app.post("/", registerPetController);
   app.get("/:id", getPetDetailsController);
+  app.get("/search", fetchPetByCityController);
 }

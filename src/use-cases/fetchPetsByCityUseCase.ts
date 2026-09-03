@@ -3,6 +3,7 @@ import { PetRepository } from "@/repositories/pet-repository";
 import { AnimalSize, AnimalType, Pet } from "@prisma/client";
 
 interface FetchPetByCityRequest {
+  page: number;
   city: string;
   age?: number;
   size?: AnimalSize;
@@ -22,7 +23,7 @@ export class FetchPetByCityUseCase {
 
     const orgs = await this.orgRepository.findManyByCity(request.city);
 
-    const pets = await this.petRepository.findManyByOrgIds(orgs, {
+    const pets = await this.petRepository.findManyByOrgIds(orgs, request.page, {
       age: request.age,
       size: request.size,
       type: request.type,
