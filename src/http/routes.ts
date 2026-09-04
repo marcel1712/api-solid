@@ -4,6 +4,7 @@ import { getPetDetailsController } from "@/http/controllers/pet/getPetDetailsCon
 import { FastifyInstance } from "fastify";
 import { authenticateOrgController } from "./controllers/org/authenticateOrgController";
 import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityController";
+import { markPetAsAdoptedController } from "./controllers/pet/markPetAsAdoptedController";
 
 export async function orgRoutes(app: FastifyInstance) {
   app.post("/", registerOrgController);
@@ -14,4 +15,5 @@ export async function petRoutes(app: FastifyInstance) {
   app.post("/", registerPetController);
   app.get("/:id", getPetDetailsController);
   app.get("/search", fetchPetByCityController);
+  app.patch("/:id/adopt", markPetAsAdoptedController);
 }

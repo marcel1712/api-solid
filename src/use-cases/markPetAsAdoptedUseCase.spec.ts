@@ -26,7 +26,7 @@ describe("Mark Pet As Adopted Use Case", () => {
   it("should be able to mark a pet as adopted", async () => {
     const pet = await createPet();
 
-    const { pet: updatedPet } = await sut.execute({
+    const updatedPet  = await sut.execute({
       petId: pet.id,
       adopted: true,
     });
@@ -42,7 +42,7 @@ describe("Mark Pet As Adopted Use Case", () => {
       adopted: true,
     });
 
-    const { pet: updatedPet } = await sut.execute({
+    const updatedPet = await sut.execute({
       petId: pet.id,
       adopted: false,
     });
