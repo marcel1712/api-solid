@@ -18,7 +18,7 @@ describe("Register Org Controller (e2e)", () => {
 
     const response = await app.inject({
       method: "POST",
-      url: "/org",
+      url: "/orgs",
       payload: {
         name: "Pet Friends",
         email,
@@ -47,7 +47,7 @@ describe("Register Org Controller (e2e)", () => {
 
     const response = await app.inject({
       method: "POST",
-      url: "/org",
+      url: "/orgs",
       payload: {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
@@ -74,7 +74,7 @@ describe("Register Org Controller (e2e)", () => {
 
     await app.inject({
       method: "POST",
-      url: "/org",
+      url: "/orgs",
       payload: {
         name: "Pet Friends",
         email,
@@ -87,7 +87,7 @@ describe("Register Org Controller (e2e)", () => {
 
     const response = await app.inject({
       method: "POST",
-      url: "/org",
+      url: "/orgs",
       payload: {
         name: "Other Pet Friends",
         email,

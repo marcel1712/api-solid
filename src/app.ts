@@ -7,7 +7,7 @@ const app = Fastify();
 app.get("/", async function handler() {
   return "Findafriend";
 });
-app.register(orgRoutes, { prefix: "org" });
+app.register(orgRoutes, { prefix: "orgs" });
 app.register(petRoutes, { prefix: "pets" });
 app.register(fastifyCookie)
 

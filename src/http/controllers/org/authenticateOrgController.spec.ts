@@ -12,7 +12,7 @@ async function createOrg() {
 
   await app.inject({
     method: "POST",
-    url: "/org",
+    url: "/orgs",
     payload: {
       name: "Pet Friends",
       email,
@@ -38,7 +38,7 @@ describe("Authenticate Org Controller (e2e)", () => {
 
     const response = await app.inject({
       method: "POST",
-      url: "/org/sessions",
+      url: "/orgs/sessions",
       payload: { email, password },
     });
 
@@ -53,7 +53,7 @@ describe("Authenticate Org Controller (e2e)", () => {
 
     const response = await app.inject({
       method: "POST",
-      url: "/org/sessions",
+      url: "/orgs/sessions",
       payload: { email, password },
     });
 
@@ -73,7 +73,7 @@ describe("Authenticate Org Controller (e2e)", () => {
 
     const response = await app.inject({
       method: "POST",
-      url: "/org/sessions",
+      url: "/orgs/sessions",
       payload: { email, password: "wrong-password" },
     });
 
@@ -85,7 +85,7 @@ describe("Authenticate Org Controller (e2e)", () => {
 
     const response = await app.inject({
       method: "POST",
-      url: "/org/sessions",
+      url: "/orgs/sessions",
       payload: { email: `${randomUUID()}@email.com`, password: "password123" },
     });
 

@@ -5,6 +5,7 @@ import { FastifyInstance } from "fastify";
 import { authenticateOrgController } from "./controllers/org/authenticateOrgController";
 import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityController";
 import { markPetAsAdoptedController } from "./controllers/pet/markPetAsAdoptedController";
+import { verifyJwt } from "./middlewares/verify-jwt";
 
 export async function orgRoutes(app: FastifyInstance) {
   app.post("/", registerOrgController);
@@ -12,8 +13,8 @@ export async function orgRoutes(app: FastifyInstance) {
 }
 
 export async function petRoutes(app: FastifyInstance) {
-  app.post("/", registerPetController);
+  app.post("/", { onRequest: [verifyJwt] }, registerPetController);
   app.get("/:id", getPetDetailsController);
   app.get("/search", fetchPetByCityController);
-  app.patch("/:id/adopt", markPetAsAdoptedController);
+  app.patch("/:id/adopt", { onRequest: [verifyJwt] }, markPetAsAdoptedController);
 }

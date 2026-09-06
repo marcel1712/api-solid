@@ -11,7 +11,7 @@ function randomWhatsapp() {
 async function createOrg(city: string) {
   const response = await app.inject({
     method: "POST",
-    url: "/org",
+    url: "/orgs",
     payload: {
       name: "Pet Friends",
       email: `${randomUUID()}@email.com`,
@@ -25,13 +25,13 @@ async function createOrg(city: string) {
   return response.json();
 }
 
-async function createPet(orgId: string, overrides: Record<string, unknown> = {}) {
+async function createPet(token: string, overrides: Record<string, unknown> = {}) {
   const response = await app.inject({
     method: "POST",
     url: "/pets",
+    headers: { authorization: `Bearer ${token}` },
     payload: {
       name: "Nick",
-      orgId,
       age: 2,
       size: "Small",
       type: "Dog",
@@ -53,7 +53,7 @@ describe("Fetch Pet By City Controller (e2e)", () => {
 
     const city = `São Carlos ${randomUUID()}`;
     const org = await createOrg(city);
-    const pet = await createPet(org.id);
+    const pet = await createPet(org.token);
 
     const response = await app.inject({
       method: "GET",
@@ -74,8 +74,8 @@ describe("Fetch Pet By City Controller (e2e)", () => {
     const cityB = `Curitiba ${randomUUID()}`;
     const orgA = await createOrg(cityA);
     const orgB = await createOrg(cityB);
-    await createPet(orgA.id, { name: "Nick" });
-    await createPet(orgB.id, { name: "Mimi" });
+    await createPet(orgA.token, { name: "Nick" });
+    await createPet(orgB.token, { name: "Mimi" });
 
     const response = await app.inject({
       method: "GET",
@@ -93,8 +93,8 @@ describe("Fetch Pet By City Controller (e2e)", () => {
 
     const city = `Rio de Janeiro ${randomUUID()}`;
     const org = await createOrg(city);
-    await createPet(org.id, { size: "Small", type: "Dog" });
-    const largeCat = await createPet(org.id, { size: "Large", type: "Cat" });
+    await createPet(org.token, { size: "Small", type: "Dog" });
+    const largeCat = await createPet(org.token, { size: "Large", type: "Cat" });
 
     const response = await app.inject({
       method: "GET",
@@ -113,8 +113,8 @@ describe("Fetch Pet By City Controller (e2e)", () => {
 
     const city = `Belo Horizonte ${randomUUID()}`;
     const org = await createOrg(city);
-    const puppy = await createPet(org.id, { age: 1 });
-    await createPet(org.id, { age: 8 });
+    const puppy = await createPet(org.token, { age: 1 });
+    await createPet(org.token, { age: 8 });
 
     const response = await app.inject({
       method: "GET",
@@ -148,7 +148,7 @@ describe("Fetch Pet By City Controller (e2e)", () => {
     const org = await createOrg(city);
 
     for (let i = 0; i < PAGE_SIZE + 1; i++) {
-      await createPet(org.id, { name: `Pet ${i}` });
+      await createPet(org.token, { name: `Pet ${i}` });
     }
 
     const firstPage = await app.inject({
@@ -181,7 +181,7 @@ describe("Fetch Pet By City Controller (e2e)", () => {
 
     const city = `Curitiba ${randomUUID()}`;
     const org = await createOrg(city);
-    await createPet(org.id);
+    await createPet(org.token);
 
     const response = await app.inject({
       method: "GET",

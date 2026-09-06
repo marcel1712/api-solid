@@ -7,7 +7,7 @@ async function createOrg() {
 
   const response = await app.inject({
     method: "POST",
-    url: "/org",
+    url: "/orgs",
     payload: {
       name: "Pet Friends",
       email: `${randomUUID()}@email.com`,
@@ -34,9 +34,9 @@ describe("Register Pet Controller (e2e)", () => {
     const response = await app.inject({
       method: "POST",
       url: "/pets",
+      headers: { authorization: `Bearer ${org.token}` },
       payload: {
         name: "Nick",
-        orgId: org.id,
         age: 2,
         size: "Small",
         type: "Dog",
@@ -56,7 +56,7 @@ describe("Register Pet Controller (e2e)", () => {
     );
   });
 
-  it("should not be able to register a pet for a non-existing org", async () => {
+  it("should not be able to register a pet without authentication", async () => {
     await app.ready();
 
     const response = await app.inject({
@@ -64,7 +64,6 @@ describe("Register Pet Controller (e2e)", () => {
       url: "/pets",
       payload: {
         name: "Nick",
-        orgId: "non-existing-org-id",
         age: 2,
         size: "Small",
         type: "Dog",
@@ -72,6 +71,25 @@ describe("Register Pet Controller (e2e)", () => {
       },
     });
 
-    expect(response.statusCode).not.toEqual(201);
+    expect(response.statusCode).toEqual(401);
+  });
+
+  it("should not be able to register a pet with an invalid token", async () => {
+    await app.ready();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/pets",
+      headers: { authorization: "Bearer invalid-token" },
+      payload: {
+        name: "Nick",
+        age: 2,
+        size: "Small",
+        type: "Dog",
+        bio: "A very good boy",
+      },
+    });
+
+    expect(response.statusCode).toEqual(401);
   });
 });

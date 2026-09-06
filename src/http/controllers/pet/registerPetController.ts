@@ -8,7 +8,6 @@ export async function registerPetController(
 ) {
   const createPetBodyScheme = z.object({
     name: z.string(),
-    orgId: z.string(),
     age: z.int(),
     size: z.literal(["Small", "Medium", "Large"]),
     type: z.literal([
@@ -26,9 +25,12 @@ export async function registerPetController(
   });
 
   try{
-    const { name, orgId, age, size, type, bio } = createPetBodyScheme.parse(
+
+    const { name, age, size, type, bio } = createPetBodyScheme.parse(
       request.body,
     );
+
+    const orgId = request.orgId as string;
 
     const registerPetUseCase = makeRegisterPetUseCase();
     const { pet } = await registerPetUseCase.execute({
