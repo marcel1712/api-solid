@@ -9,7 +9,7 @@ function randomWhatsapp() {
 async function createOrg() {
   const response = await app.inject({
     method: "POST",
-    url: "/org",
+    url: "/orgs",
     payload: {
       name: "Pet Friends",
       email: `${randomUUID()}@email.com`,
@@ -23,13 +23,13 @@ async function createOrg() {
   return response.json();
 }
 
-async function createPet(orgId: string) {
+async function createPet(token: string) {
   const response = await app.inject({
     method: "POST",
     url: "/pets",
+    headers: { authorization: `Bearer ${token}` },
     payload: {
       name: "Nick",
-      orgId,
       age: 2,
       size: "Small",
       type: "Dog",
@@ -49,11 +49,12 @@ describe("Mark Pet As Adopted Controller (e2e)", () => {
     await app.ready();
 
     const org = await createOrg();
-    const pet = await createPet(org.id);
+    const pet = await createPet(org.token);
 
     const response = await app.inject({
       method: "PATCH",
       url: `/pets/${pet.id}/adopt`,
+      headers: { authorization: `Bearer ${org.token}` },
       payload: { adopted: true },
     });
 
@@ -67,17 +68,19 @@ describe("Mark Pet As Adopted Controller (e2e)", () => {
     await app.ready();
 
     const org = await createOrg();
-    const pet = await createPet(org.id);
+    const pet = await createPet(org.token);
 
     await app.inject({
       method: "PATCH",
       url: `/pets/${pet.id}/adopt`,
+      headers: { authorization: `Bearer ${org.token}` },
       payload: { adopted: true },
     });
 
     const response = await app.inject({
       method: "PATCH",
       url: `/pets/${pet.id}/adopt`,
+      headers: { authorization: `Bearer ${org.token}` },
       payload: { adopted: false },
     });
 
@@ -90,9 +93,12 @@ describe("Mark Pet As Adopted Controller (e2e)", () => {
   it("should not be able to mark a non-existing pet as adopted", async () => {
     await app.ready();
 
+    const org = await createOrg();
+
     const response = await app.inject({
       method: "PATCH",
       url: `/pets/${randomUUID()}/adopt`,
+      headers: { authorization: `Bearer ${org.token}` },
       payload: { adopted: true },
     });
 
@@ -103,9 +109,12 @@ describe("Mark Pet As Adopted Controller (e2e)", () => {
   it("should not be able to mark a pet as adopted with an invalid id", async () => {
     await app.ready();
 
+    const org = await createOrg();
+
     const response = await app.inject({
       method: "PATCH",
       url: "/pets/not-a-uuid/adopt",
+      headers: { authorization: `Bearer ${org.token}` },
       payload: { adopted: true },
     });
 
@@ -116,14 +125,48 @@ describe("Mark Pet As Adopted Controller (e2e)", () => {
     await app.ready();
 
     const org = await createOrg();
-    const pet = await createPet(org.id);
+    const pet = await createPet(org.token);
 
     const response = await app.inject({
       method: "PATCH",
       url: `/pets/${pet.id}/adopt`,
+      headers: { authorization: `Bearer ${org.token}` },
       payload: {},
     });
 
     expect(response.statusCode).toEqual(400);
+  });
+
+  it("should not be able to mark another org's pet as adopted", async () => {
+    await app.ready();
+
+    const owner = await createOrg();
+    const pet = await createPet(owner.token);
+
+    const otherOrg = await createOrg();
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/pets/${pet.id}/adopt`,
+      headers: { authorization: `Bearer ${otherOrg.token}` },
+      payload: { adopted: true },
+    });
+
+    expect(response.statusCode).toEqual(403);
+  });
+
+  it("should not be able to mark a pet as adopted without authentication", async () => {
+    await app.ready();
+
+    const org = await createOrg();
+    const pet = await createPet(org.token);
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/pets/${pet.id}/adopt`,
+      payload: { adopted: true },
+    });
+
+    expect(response.statusCode).toEqual(401);
   });
 });

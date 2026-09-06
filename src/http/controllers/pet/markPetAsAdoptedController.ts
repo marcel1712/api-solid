@@ -1,4 +1,6 @@
 import { makeMarkPetAsAdoptedUseCase } from "@/use-cases/factories/make-mark-pet-as-adopted";
+import { ResourceNotFoundError } from "@/use-cases/errors/resource-not-found-error";
+import { NotAllowedError } from "@/use-cases/errors/not-allowed-error";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
@@ -18,8 +20,11 @@ export async function markPetAsAdoptedController(request:FastifyRequest, reply:F
 
         const markPetAsAdoptedUseCase = await makeMarkPetAsAdoptedUseCase()
 
+        const orgId = request.orgId as string
+
         const adoptedPet = await markPetAsAdoptedUseCase.execute({
             petId,
+            orgId,
             adopted
         })
 
@@ -31,8 +36,11 @@ export async function markPetAsAdoptedController(request:FastifyRequest, reply:F
                 issues: err.issues,
             })
         }
-        if (err instanceof Error) {
+        if (err instanceof ResourceNotFoundError) {
             return reply.status(404).send({ message: err.message })
+        }
+        if (err instanceof NotAllowedError) {
+            return reply.status(403).send({ message: err.message })
         }
         throw err
     }
