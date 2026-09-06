@@ -15,4 +15,15 @@ export default defineConfig({
   // enable the recommended rules from both JavaScript and TypeScript ESLint
   // This activates best practices from both ecosystems
   extends: [js.configs.recommended, tseslint.configs.recommended],
+
+  rules: {
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        varsIgnorePattern: "^_",
+        argsIgnorePattern: "^_",
+        destructuredArrayIgnorePattern: "^_",
+      },
+    ],
+  },
 });

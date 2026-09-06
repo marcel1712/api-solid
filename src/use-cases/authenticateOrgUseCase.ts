@@ -34,7 +34,7 @@ export class AuthenticateOrgUseCase {
       );
     }
 
-    const { created_at, password_hash, ...orgPreview } = org;
+    const { created_at: _created_at, password_hash: _password_hash, ...orgPreview } = org;
 
     const authenticatedOrg: AuthenticatedOrg = {
       org: orgPreview,
