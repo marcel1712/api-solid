@@ -1,4 +1,4 @@
-import { OrgRepository } from "@/repositories/org-repository";
+import { OrgRepository, UpdateOrgData } from "@/repositories/org-repository";
 import { Org, Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
@@ -29,6 +29,20 @@ export class InMemoryOrgRepository implements OrgRepository {
     const orgs = this.items.filter((org) => org.city === city);
 
     return orgs;
+  }
+
+  async update(id: string, data: UpdateOrgData): Promise<Org | null> {
+    const org = await this.findById(id);
+    if (!org) {
+      return null;
+    }
+
+    if (data.name !== undefined) org.name = data.name;
+    if (data.whatsapp !== undefined) org.whatsapp = data.whatsapp;
+    if (data.city !== undefined) org.city = data.city;
+    if (data.address !== undefined) org.address = data.address;
+
+    return org;
   }
 
   async create(data: Prisma.OrgCreateInput) {

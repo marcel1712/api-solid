@@ -1,5 +1,5 @@
 import { AnimalSize, AnimalType, Org, Pet, Prisma, PrismaClient } from "@prisma/client";
-import { PetRepository } from "@/repositories/pet-repository";
+import { PetRepository, UpdatePetData } from "@/repositories/pet-repository";
 
 export class PrismaPetRepository implements PetRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -40,6 +40,23 @@ export class PrismaPetRepository implements PetRepository {
       return await this.prisma.pet.update({
         where: { id },
         data: { adopted },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async update(id: string, data: UpdatePetData): Promise<Pet | null> {
+    try {
+      return await this.prisma.pet.update({
+        where: { id },
+        data,
       });
     } catch (error) {
       if (

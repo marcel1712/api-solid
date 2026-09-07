@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { PetRepository } from "@/repositories/pet-repository";
+import { PetRepository, UpdatePetData } from "@/repositories/pet-repository";
 import { AnimalSize, AnimalType, Org, Pet, Prisma } from "@prisma/client";
 
 export class InMemoryPetRepository implements PetRepository {
@@ -43,6 +43,21 @@ export class InMemoryPetRepository implements PetRepository {
     }
 
     pet.adopted = adopted;
+
+    return pet;
+  }
+
+  async update(id: string, data: UpdatePetData): Promise<Pet | null> {
+    const pet = await this.findById(id);
+    if (!pet) {
+      return null;
+    }
+
+    if (data.name !== undefined) pet.name = data.name;
+    if (data.age !== undefined) pet.age = data.age;
+    if (data.size !== undefined) pet.size = data.size;
+    if (data.type !== undefined) pet.type = data.type;
+    if (data.bio !== undefined) pet.bio = data.bio;
 
     return pet;
   }

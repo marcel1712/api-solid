@@ -1,6 +1,6 @@
-import { Org } from "@prisma/client";
+import { Org, Prisma } from "@prisma/client";
 import { OrgCreateInput } from "../../../generated/prisma/models";
-import { OrgRepository } from "@/repositories/org-repository";
+import { OrgRepository, UpdateOrgData } from "@/repositories/org-repository";
 import { PrismaClient } from "@/../generated/prisma/client";
 
 export class PrismaOrgRepository implements OrgRepository {
@@ -32,5 +32,22 @@ export class PrismaOrgRepository implements OrgRepository {
         city,
       },
     });
+  }
+
+  async update(id: string, data: UpdateOrgData): Promise<Org | null> {
+    try {
+      return await this.prisma.org.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return null;
+      }
+      throw error;
+    }
   }
 }

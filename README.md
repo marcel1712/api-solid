@@ -106,12 +106,19 @@ Prisma / PostgreSQL   or   In-Memory (tests)
 - **JWT-based sessions**: login issues a short-lived access token plus an
   `httpOnly`, `SameSite` refresh cookie (never exposed to client-side JS).
 - **Route-level authorization** via a `verifyJwt` middleware, applied only to
-  the routes that mutate data (`POST /pets`, `PATCH /pets/:id/adopt`) — read
-  endpoints stay public so anyone can browse pets.
+  the routes that mutate data (`POST /pets`, `PATCH /pets/:id`,
+  `PATCH /pets/:id/adopt`, `PATCH /orgs/:id`) — read endpoints stay public
+  so anyone can browse pets.
 - **Resource ownership checks**: the org id used to create/update a pet
   always comes from the verified JWT, never from the request body, and
-  `MarkPetAsAdoptedUseCase` rejects the update (`403`) if the authenticated
-  org doesn't own the pet.
+  `UpdatePetUseCase`/`MarkPetAsAdoptedUseCase`/`UpdateOrgUseCase` reject the
+  update (`403`) if the authenticated org isn't the owner of the resource
+  being changed.
+- **Restricted mutable fields**: `PATCH /orgs/:id` only accepts `name`,
+  `whatsapp`, `city` and `address` (email and password are never
+  updatable through this route), and `PATCH /pets/:id` only accepts
+  `name`, `age`, `size`, `type` and `bio` — adoption status has its own
+  dedicated route so it can't be changed as a side effect.
 - **No user enumeration**: login returns the exact same generic error
   whether the email doesn't exist or the password is wrong — an attacker
   can't use the response to tell which one was incorrect.
@@ -130,8 +137,10 @@ Base routes are prefixed with `/orgs` and `/pets`.
 | `POST`  | `/orgs`               |      No       | Register a new org (auto-login: returns a token) |
 | `POST`  | `/orgs/sessions`      |      No       | Authenticate an org (login)                   |
 | `GET`   | `/orgs/:id`           |      No       | Get an org's public details (name, address, WhatsApp) |
+| `PATCH` | `/orgs/:id`           |    **Yes**    | Update the authenticated org's own information (owner only; email and password can't be changed here) |
 | `POST`  | `/pets`               |    **Yes**    | Register a pet for the authenticated org      |
 | `GET`   | `/pets/:id`           |      No       | Get a pet's details, including the owning org's WhatsApp |
+| `PATCH` | `/pets/:id`           |    **Yes**    | Update a pet's mutable information (owner org only; adoption status can't be changed here) |
 | `GET`   | `/pets/search`        |      No       | List pets by city, with optional filters (`age`, `size`, `type`) and pagination (`page`) |
 | `PATCH` | `/pets/:id/adopt`     |    **Yes**    | Mark a pet as adopted/available (owner org only) |
 
@@ -156,7 +165,7 @@ created_at    DateTime       created_at    DateTime
 
 ## Testing
 
-The project has **83 automated tests** across **14 test files**, split into:
+The project has **106 automated tests** across **18 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge

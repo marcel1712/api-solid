@@ -2,21 +2,25 @@ import { registerOrgController } from "@/http/controllers/org/registerOrgControl
 import { registerPetController } from "@/http/controllers/pet/registerPetController";
 import { getPetDetailsController } from "@/http/controllers/pet/getPetDetailsController";
 import { getOrgDetailsController } from "@/http/controllers/org/getOrgDetailsController";
+import { updateOrgController } from "@/http/controllers/org/updateOrgController";
 import { FastifyInstance } from "fastify";
 import { authenticateOrgController } from "./controllers/org/authenticateOrgController";
 import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityController";
 import { markPetAsAdoptedController } from "./controllers/pet/markPetAsAdoptedController";
+import { updatePetController } from "./controllers/pet/updatePetController";
 import { verifyJwt } from "./middlewares/verify-jwt";
 
 export async function orgRoutes(app: FastifyInstance) {
   app.post("/", registerOrgController);
   app.post("/sessions", authenticateOrgController);
   app.get("/:id", getOrgDetailsController);
+  app.patch("/:id", { onRequest: [verifyJwt] }, updateOrgController);
 }
 
 export async function petRoutes(app: FastifyInstance) {
   app.post("/", { onRequest: [verifyJwt] }, registerPetController);
   app.get("/:id", getPetDetailsController);
   app.get("/search", fetchPetByCityController);
+  app.patch("/:id", { onRequest: [verifyJwt] }, updatePetController);
   app.patch("/:id/adopt", { onRequest: [verifyJwt] }, markPetAsAdoptedController);
 }
