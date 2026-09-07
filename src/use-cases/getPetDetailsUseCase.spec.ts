@@ -4,6 +4,7 @@ import { GetPetDetailsUseCase } from "./getPetDetailsUseCase";
 import { InMemoryPetRepository } from "../repositories/in-memory/in-memory-pet-repository";
 import { InMemoryOrgRepository } from "@/repositories/in-memory/in-memory-org-repository";
 import { OrgRepository } from "@/repositories/org-repository";
+import { ResourceNotFoundError } from "./errors/resource-not-found-error";
 
 let orgRepository: OrgRepository
 let petRepository: PetRepository;
@@ -71,6 +72,6 @@ describe("Get Pet Details Use Case", () => {
   it("should not be able to get details of a non-existing pet", async () => {
     await expect(() =>
       sut.execute({ petId: "non-existing-pet-id" }),
-    ).rejects.toThrow(new Error("This pet or organization doesn't exist"));
+    ).rejects.toBeInstanceOf(ResourceNotFoundError);
   });
 });

@@ -1,6 +1,7 @@
 import { OrgRepository } from "@/repositories/org-repository";
 import { PetRepository } from "@/repositories/pet-repository";
 import { Pet } from "@prisma/client";
+import { ResourceNotFoundError } from "@/use-cases/errors/resource-not-found-error";
 
 interface GetPetDetailsRequest {
   petId: string;
@@ -18,13 +19,13 @@ export class GetPetDetailsUseCase {
     const pet = await this.petRepository.findById(request.petId);
 
     if (!pet) {
-      throw new Error("This pet or organization doesn't exist");
+      throw new ResourceNotFoundError();
     }
 
     const org = await this.orgRepository.findById(pet.orgId);
 
     if (!org) {
-      throw new Error("This pet or organization doesn't exist");
+      throw new ResourceNotFoundError();
     }
 
     return { pet, whatsapp: org.whatsapp };

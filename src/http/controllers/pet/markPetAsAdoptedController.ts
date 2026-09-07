@@ -1,6 +1,4 @@
 import { makeMarkPetAsAdoptedUseCase } from "@/use-cases/factories/make-mark-pet-as-adopted";
-import { ResourceNotFoundError } from "@/use-cases/errors/resource-not-found-error";
-import { NotAllowedError } from "@/use-cases/errors/not-allowed-error";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
@@ -14,34 +12,18 @@ export async function markPetAsAdoptedController(request:FastifyRequest, reply:F
         id: z.string().uuid(),
     });
 
-    try{
-        const { id: petId } = markPetAsAdoptedParamsScheme.parse(request.params)
-        const { adopted } = markPetAsAdoptedScheme.parse(request.body)
+    const { id: petId } = markPetAsAdoptedParamsScheme.parse(request.params)
+    const { adopted } = markPetAsAdoptedScheme.parse(request.body)
 
-        const markPetAsAdoptedUseCase = await makeMarkPetAsAdoptedUseCase()
+    const markPetAsAdoptedUseCase = await makeMarkPetAsAdoptedUseCase()
 
-        const orgId = request.orgId as string
+    const orgId = request.orgId as string
 
-        const adoptedPet = await markPetAsAdoptedUseCase.execute({
-            petId,
-            orgId,
-            adopted
-        })
+    const adoptedPet = await markPetAsAdoptedUseCase.execute({
+        petId,
+        orgId,
+        adopted
+    })
 
-        return reply.status(200).send({ adoptedPet })
-    }catch(err){
-        if (err instanceof z.ZodError) {
-            return reply.status(400).send({
-                message: "Invalid request",
-                issues: err.issues,
-            })
-        }
-        if (err instanceof ResourceNotFoundError) {
-            return reply.status(404).send({ message: err.message })
-        }
-        if (err instanceof NotAllowedError) {
-            return reply.status(403).send({ message: err.message })
-        }
-        throw err
-    }
+    return reply.status(200).send({ adoptedPet })
 }

@@ -2,6 +2,7 @@ import { describe, it, beforeEach, expect } from "vitest";
 import { OrgRepository } from "@/repositories/org-repository";
 import { InMemoryOrgRepository } from "@/repositories/in-memory/in-memory-org-repository";
 import { GetOrgDetailsUseCase } from "./getOrgDetailsUseCase";
+import { ResourceNotFoundError } from "./errors/resource-not-found-error";
 
 let orgRepository: OrgRepository;
 let sut: GetOrgDetailsUseCase;
@@ -36,6 +37,6 @@ describe("Get Org Details Use Case", () => {
   it("should not be able to get details of a non-existing org", async () => {
     await expect(() =>
       sut.execute({ orgId: "non-existing-org-id" }),
-    ).rejects.toThrow(new Error("This organization does not exist"));
+    ).rejects.toBeInstanceOf(ResourceNotFoundError);
   });
 });

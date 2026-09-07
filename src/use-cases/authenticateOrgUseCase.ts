@@ -1,6 +1,7 @@
 import { OrgRepository } from "@/repositories/org-repository";
 import { Org } from "@prisma/client";
 import { compare } from "bcrypt";
+import { InvalidCredentialsError } from "@/use-cases/errors/invalid-credentials-error";
 
 interface AuthenticateOrgRequest {
   email: string;
@@ -21,17 +22,13 @@ export class AuthenticateOrgUseCase {
     const org = await this.orgRepository.findByEmail(request.email);
 
     if (!org) {
-      throw new Error(
-        "Authentication error verify if the email or password is correct",
-      );
+      throw new InvalidCredentialsError();
     }
-    
+
     const passwordMatches = await compare(request.password, org.password_hash);
 
     if (!passwordMatches) {
-      throw new Error(
-        "Authentication error verify if the email or password is correct",
-      );
+      throw new InvalidCredentialsError();
     }
 
     const { created_at: _created_at, password_hash: _password_hash, ...orgPreview } = org;

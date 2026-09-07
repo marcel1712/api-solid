@@ -8,40 +8,25 @@ export async function fetchPetByCityController(
   reply: FastifyReply,
 ) {
   const fetchPetByCityQuerySchema = z.object({
-    city: z.string().min(1),
+    city: z.string().trim().min(1),
     page: z.coerce.number().min(1),
     age: z.coerce.number().optional(),
     size: z.enum(AnimalSize).optional(),
     type: z.enum(AnimalType).optional(),
   });
 
-  try {
-    const { city, page, age, size, type } = fetchPetByCityQuerySchema.parse(
-      request.query,
-    );
+  const { city, page, age, size, type } = fetchPetByCityQuerySchema.parse(
+    request.query,
+  );
 
-    const fetchPetByCityUseCase = makeFetchPetByCityUseCase();
-    const pets = await fetchPetByCityUseCase.execute({
-      city,
-      page,
-      age,
-      size,
-      type,
-    });
+  const fetchPetByCityUseCase = makeFetchPetByCityUseCase();
+  const pets = await fetchPetByCityUseCase.execute({
+    city,
+    page,
+    age,
+    size,
+    type,
+  });
 
-    return reply.status(200).send(pets);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      return reply.status(400).send({
-        message: "Invalid query parameters",
-        issues: err.issues,
-      });
-    }
-
-    if (err instanceof Error) {
-      return reply.status(400).send({ message: err.message });
-    }
-
-    throw err;
-  }
+  return reply.status(200).send(pets);
 }

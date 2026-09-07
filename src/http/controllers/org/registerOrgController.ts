@@ -22,21 +22,18 @@ export async function registerOrgController(
 
   const registerOrgUseCase = makeRegisterOrgUseCase();
 
-  try {
-    const { org } = await registerOrgUseCase.execute({
-      name,
-      email,
-      password,
-      whatsapp,
-      city,
-      address,
-    });
-    
-    const { token, refreshToken } = await generateOrgTokens(org.id);
-    
-    const { password_hash, ...publicOrg } = org;
+  const { org } = await registerOrgUseCase.execute({
+    name,
+    email,
+    password,
+    whatsapp,
+    city,
+    address,
+  });
 
+  const { token, refreshToken } = await generateOrgTokens(org.id);
 
+  const { password_hash: _password_hash, ...publicOrg } = org;
 
   return reply
     .status(201)
@@ -50,7 +47,4 @@ export async function registerOrgController(
       ...publicOrg,
       token,
     });
-  } catch {
-    return reply.status(409).send({ error: "Unable to register with the provided information" });
-  }
 }

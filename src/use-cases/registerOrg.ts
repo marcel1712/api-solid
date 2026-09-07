@@ -1,6 +1,7 @@
 import { OrgRepository } from "@/repositories/org-repository";
 import { Org } from "@prisma/client";
 import { hash } from "bcrypt";
+import { ResourceAlreadyExistsError } from "@/use-cases/errors/resource-already-exists-error";
 
 interface RegisterOrgRequest {
   name: string;
@@ -21,7 +22,7 @@ export class RegisterOrgUseCase {
   async execute(request: RegisterOrgRequest): Promise<CreatedOrgResponse> {
     const emailExist = await this.OrgRepository.findByEmail(request.email);
     if (emailExist) {
-      throw new Error("This email is already registered");
+      throw new ResourceAlreadyExistsError("This email is already registered");
     }
 
     // const password_hash: string = request.password; //string = await hash('s0/\/\P4$$w0rD', 10)

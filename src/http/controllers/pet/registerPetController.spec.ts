@@ -92,4 +92,46 @@ describe("Register Pet Controller (e2e)", () => {
 
     expect(response.statusCode).toEqual(401);
   });
+
+  it("should not be able to register a pet with an invalid size", async () => {
+    await app.ready();
+
+    const org = await createOrg();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/pets",
+      headers: { authorization: `Bearer ${org.token}` },
+      payload: {
+        name: "Nick",
+        age: 2,
+        size: "Huge",
+        type: "Dog",
+        bio: "A very good boy",
+      },
+    });
+
+    expect(response.statusCode).toEqual(400);
+  });
+
+  it("should not be able to register a pet with an invalid type", async () => {
+    await app.ready();
+
+    const org = await createOrg();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/pets",
+      headers: { authorization: `Bearer ${org.token}` },
+      payload: {
+        name: "Nick",
+        age: 2,
+        size: "Small",
+        type: "Dragon",
+        bio: "A very good boy",
+      },
+    });
+
+    expect(response.statusCode).toEqual(400);
+  });
 });

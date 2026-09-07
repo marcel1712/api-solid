@@ -26,17 +26,12 @@ export async function getPetDetailsController(
 
     const { id } = getPetParamsScheme.parse(request.params);
 
-    try{
+    const getPetUseCase = makeGetPetUseCase();
+    const { pet, whatsapp } = await getPetUseCase.execute({
+        petId: id
+    })
 
-        const getPetUseCase = makeGetPetUseCase();
-        const { pet, whatsapp } = await getPetUseCase.execute({
-            petId: id
-        })
+    const petDetails: GetPetDetailsResponse = { ...pet, whatsapp };
 
-        const petDetails: GetPetDetailsResponse = { ...pet, whatsapp };
-
-        return reply.status(200).send(petDetails);
-    } catch {
-        return reply.status(404).send({ message: "Pet not found" });
-    }
+    return reply.status(200).send(petDetails);
 }

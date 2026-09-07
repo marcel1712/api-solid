@@ -17,24 +17,17 @@ export async function authenticateOrgController(
 
   const authenticateOrgUseCase = makeAuthenticateOrgUseCase();
 
-  try {
-    const { org } = await authenticateOrgUseCase.execute({ email, password });
+  const { org } = await authenticateOrgUseCase.execute({ email, password });
 
-    const { token, refreshToken } = await generateOrgTokens(org.id);
+  const { token, refreshToken } = await generateOrgTokens(org.id);
 
-    return reply
-      .status(200)
-      .setCookie("refreshToken", refreshToken, {
-        path: "/",
-        secure: env.NODE_ENV === "production",
-        sameSite: true,
-        httpOnly: true,
-      })
-      .send({ token });
-      
-  } catch (err) {
-    return reply.status(400).send({
-      message: "Invalid email or password",
-    });
-  }
+  return reply
+    .status(200)
+    .setCookie("refreshToken", refreshToken, {
+      path: "/",
+      secure: env.NODE_ENV === "production",
+      sameSite: true,
+      httpOnly: true,
+    })
+    .send({ token });
 }

@@ -5,6 +5,7 @@ import { InMemoryPetRepository } from "../repositories/in-memory/in-memory-pet-r
 import { OrgRepository } from "../repositories/org-repository";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
 import { RegisterOrgUseCase } from "./registerOrg";
+import { ResourceNotFoundError } from "./errors/resource-not-found-error";
 
 let petRepository: PetRepository;
 let orgRepository: OrgRepository;
@@ -128,7 +129,7 @@ describe("Register Pet Use Case", () => {
         bio: "...",
         orgId: "non-existing-org-id",
       }),
-    ).rejects.toThrow(new Error("This org doesnt exist"));
+    ).rejects.toBeInstanceOf(ResourceNotFoundError);
   });
 
   it("should be able to register multiple pets for the same org", async () => {
