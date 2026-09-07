@@ -10,20 +10,21 @@ export async function fetchPetByCityController(
   const fetchPetByCityQuerySchema = z.object({
     city: z.string().trim().min(1),
     page: z.coerce.number().min(1),
-    age: z.coerce.number().optional(),
+    ageMin: z.coerce.number().min(0).optional(),
+    ageMax: z.coerce.number().min(0).optional(),
     size: z.enum(AnimalSize).optional(),
     type: z.enum(AnimalType).optional(),
   });
 
-  const { city, page, age, size, type } = fetchPetByCityQuerySchema.parse(
-    request.query,
-  );
+  const { city, page, ageMin, ageMax, size, type } =
+    fetchPetByCityQuerySchema.parse(request.query);
 
   const fetchPetByCityUseCase = makeFetchPetByCityUseCase();
   const pets = await fetchPetByCityUseCase.execute({
     city,
     page,
-    age,
+    ageMin,
+    ageMax,
     size,
     type,
   });

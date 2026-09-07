@@ -10,7 +10,14 @@ export interface UpdatePetData {
 
 export interface PetRepository {
   findManyByOrgIds(
-    orgs: Org[], page: number, filters: { age?: number; size?: AnimalSize; type?: AnimalType },
+    orgs: Org[],
+    page: number,
+    filters: {
+      ageMin?: number;
+      ageMax?: number;
+      size?: AnimalSize;
+      type?: AnimalType;
+    },
   ): Promise<Pet[]>;
   findById(id: string): Promise<Pet | null>;
   updateAdoptionStatus(id: string, adopted: boolean): Promise<Pet | null>;

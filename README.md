@@ -141,10 +141,12 @@ Base routes are prefixed with `/orgs` and `/pets`.
 | `POST`  | `/pets`               |    **Yes**    | Register a pet for the authenticated org      |
 | `GET`   | `/pets/:id`           |      No       | Get a pet's details, including the owning org's WhatsApp |
 | `PATCH` | `/pets/:id`           |    **Yes**    | Update a pet's mutable information (owner org only; adoption status can't be changed here) |
-| `GET`   | `/pets/search`        |      No       | List pets by city, with optional filters (`age`, `size`, `type`) and pagination (`page`) |
+| `GET`   | `/pets/search`        |      No       | List available (non-adopted) pets by city, with optional filters (`ageMin`, `ageMax`, `size`, `type`) and pagination (`page`). Each pet includes the owning org's `whatsapp` |
 | `PATCH` | `/pets/:id/adopt`     |    **Yes**    | Mark a pet as adopted/available (owner org only) |
 
-**Example — search**: `GET /pets/search?city=São Paulo&page=1&size=Small&type=Dog`
+**Example — search**: `GET /pets/search?city=São Paulo&page=1&size=Small&type=Dog&ageMin=0&ageMax=2`
+
+`age` is stored and returned in **years**. Already-adopted pets are excluded from search results automatically.
 
 ## Data Model
 

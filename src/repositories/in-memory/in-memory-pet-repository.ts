@@ -65,7 +65,12 @@ export class InMemoryPetRepository implements PetRepository {
   async findManyByOrgIds(
     orgs: Org[],
     page: number,
-    filters: { age?: number; size?: AnimalSize; type?: AnimalType },
+    filters: {
+      ageMin?: number;
+      ageMax?: number;
+      size?: AnimalSize;
+      type?: AnimalType;
+    },
   ): Promise<Pet[]> {
     const orgIds = orgs.map((org) => org.id);
 
@@ -73,7 +78,13 @@ export class InMemoryPetRepository implements PetRepository {
       if (!orgIds.includes(pet.orgId)) {
         return false;
       }
-      if (filters.age !== undefined && pet.age !== filters.age) {
+      if (pet.adopted) {
+        return false;
+      }
+      if (filters.ageMin !== undefined && pet.age < filters.ageMin) {
+        return false;
+      }
+      if (filters.ageMax !== undefined && pet.age > filters.ageMax) {
         return false;
       }
       if (filters.size !== undefined && pet.size !== filters.size) {

@@ -108,7 +108,7 @@ describe("Fetch Pet By City Controller (e2e)", () => {
     ]);
   });
 
-  it("should be able to filter pets by age", async () => {
+  it("should be able to filter pets by an age range", async () => {
     await app.ready();
 
     const city = `Belo Horizonte ${randomUUID()}`;
@@ -119,12 +119,58 @@ describe("Fetch Pet By City Controller (e2e)", () => {
     const response = await app.inject({
       method: "GET",
       url: "/pets/search",
-      query: { city, page: "1", age: "1" },
+      query: { city, page: "1", ageMin: "0", ageMax: "2" },
     });
 
     expect(response.statusCode).toEqual(200);
     expect(response.json()).toEqual([
       expect.objectContaining({ id: puppy.id, age: 1 }),
+    ]);
+  });
+
+  it("should include the owning org's whatsapp on each pet", async () => {
+    await app.ready();
+
+    const city = `Florianópolis ${randomUUID()}`;
+    const org = await createOrg(city);
+    const pet = await createPet(org.token);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/pets/search",
+      query: { city, page: "1" },
+    });
+
+    expect(response.statusCode).toEqual(200);
+    expect(response.json()).toEqual([
+      expect.objectContaining({ id: pet.id, whatsapp: org.whatsapp }),
+    ]);
+  });
+
+  it("should not return pets that have already been adopted", async () => {
+    await app.ready();
+
+    const city = `Porto Alegre ${randomUUID()}`;
+    const org = await createOrg(city);
+    const adoptedPet = await createPet(org.token, { name: "Nick" });
+    const availablePet = await createPet(org.token, { name: "Mimi" });
+
+    await app.inject({
+      method: "PATCH",
+      url: `/pets/${adoptedPet.id}/adopt`,
+      headers: { authorization: `Bearer ${org.token}` },
+      payload: { adopted: true },
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/pets/search",
+      query: { city, page: "1" },
+    });
+
+    expect(response.statusCode).toEqual(200);
+    expect(response.json()).toEqual([
+      expect.objectContaining({ id: availablePet.id }),
     ]);
   });
 

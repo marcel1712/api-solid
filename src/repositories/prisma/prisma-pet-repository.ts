@@ -15,7 +15,12 @@ export class PrismaPetRepository implements PetRepository {
   async findManyByOrgIds(
     orgs: Org[],
     page: number,
-    filters: { age?: number; size?: AnimalSize; type?: AnimalType },
+    filters: {
+      ageMin?: number;
+      ageMax?: number;
+      size?: AnimalSize;
+      type?: AnimalType;
+    },
   ): Promise<Pet[]> {
     const orgsIds = orgs.map((org) => org.id);
     const PAGE_SIZE = 20;
@@ -23,7 +28,11 @@ export class PrismaPetRepository implements PetRepository {
     return this.prisma.pet.findMany({
       where: {
         orgId: { in: orgsIds },
-        age: filters.age,
+        adopted: false,
+        age: {
+          gte: filters.ageMin,
+          lte: filters.ageMax,
+        },
         size: filters.size,
         type: filters.type,
       },

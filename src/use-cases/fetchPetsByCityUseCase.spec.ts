@@ -108,15 +108,43 @@ describe("Fetch Pet By City Use Case", () => {
     expect(pets).toHaveLength(0);
   });
 
-  it("should be able to filter pets by age", async () => {
+  it("should be able to filter pets by an age range", async () => {
     const org = await createOrg({ city: "São Paulo" });
     await createPet(org.id, { name: "Nick", age: 2 });
     await createPet(org.id, { name: "Mimi", age: 9 });
 
-    const pets = await sut.execute({ city: "São Paulo", age: 2, page: 1 });
+    const pets = await sut.execute({
+      city: "São Paulo",
+      ageMin: 0,
+      ageMax: 3,
+      page: 1,
+    });
 
     expect(pets).toHaveLength(1);
     expect(pets?.[0].name).toEqual("Nick");
+  });
+
+  it("should include the owning org's whatsapp on each pet", async () => {
+    const org = await createOrg({ city: "São Paulo" });
+    await createPet(org.id);
+
+    const pets = await sut.execute({ city: "São Paulo", page: 1 });
+
+    expect(pets?.[0].whatsapp).toEqual(org.whatsapp);
+  });
+
+  it("should not return pets that have already been adopted", async () => {
+    const org = await createOrg({ city: "São Paulo" });
+    const adoptedPet = await createPet(org.id, { name: "Nick" });
+    await createPet(org.id, { name: "Mimi" });
+    (petRepository as InMemoryPetRepository).items.find(
+      (pet) => pet.id === adoptedPet.id,
+    )!.adopted = true;
+
+    const pets = await sut.execute({ city: "São Paulo", page: 1 });
+
+    expect(pets).toHaveLength(1);
+    expect(pets?.[0].name).toEqual("Mimi");
   });
 
   it("should be able to filter pets by size", async () => {
@@ -150,7 +178,8 @@ describe("Fetch Pet By City Use Case", () => {
       city: "São Paulo",
       type: "Dog",
       size: "Small",
-      age: 2,
+      ageMin: 2,
+      ageMax: 2,
       page: 1,
     });
 
