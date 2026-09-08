@@ -4,10 +4,13 @@ import { GetPetDetailsUseCase } from "./getPetDetailsUseCase";
 import { InMemoryPetRepository } from "../repositories/in-memory/in-memory-pet-repository";
 import { InMemoryOrgRepository } from "@/repositories/in-memory/in-memory-org-repository";
 import { OrgRepository } from "@/repositories/org-repository";
+import { PetImageRepository } from "@/repositories/pet-image-repository";
+import { InMemoryPetImageRepository } from "@/repositories/in-memory/in-memory-pet-image-repository";
 import { ResourceNotFoundError } from "./errors/resource-not-found-error";
 
 let orgRepository: OrgRepository
 let petRepository: PetRepository;
+let petImageRepository: PetImageRepository;
 let sut: GetPetDetailsUseCase;
 
 async function createOrg() {
@@ -38,7 +41,8 @@ describe("Get Pet Details Use Case", () => {
   beforeEach(async () => {
     orgRepository = new InMemoryOrgRepository();
     petRepository = new InMemoryPetRepository();
-    sut = new GetPetDetailsUseCase(petRepository, orgRepository);
+    petImageRepository = new InMemoryPetImageRepository();
+    sut = new GetPetDetailsUseCase(petRepository, orgRepository, petImageRepository);
 
     await createOrg();
   });

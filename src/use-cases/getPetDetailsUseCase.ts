@@ -1,6 +1,7 @@
 import { OrgRepository } from "@/repositories/org-repository";
 import { PetRepository } from "@/repositories/pet-repository";
-import { Pet } from "@prisma/client";
+import { PetImageRepository } from "@/repositories/pet-image-repository";
+import { Pet, PetImage } from "@prisma/client";
 import { ResourceNotFoundError } from "@/use-cases/errors/resource-not-found-error";
 
 interface GetPetDetailsRequest {
@@ -9,10 +10,15 @@ interface GetPetDetailsRequest {
 interface GetPetDetailsResponse{
   pet: Pet;
   whatsapp: string;
+  images: PetImage[];
 }
 
 export class GetPetDetailsUseCase {
-  constructor(private petRepository: PetRepository, private orgRepository: OrgRepository) {}
+  constructor(
+    private petRepository: PetRepository,
+    private orgRepository: OrgRepository,
+    private petImageRepository: PetImageRepository,
+  ) {}
 
   async execute(request: GetPetDetailsRequest): Promise<GetPetDetailsResponse> {
 
@@ -28,6 +34,8 @@ export class GetPetDetailsUseCase {
       throw new ResourceNotFoundError();
     }
 
-    return { pet, whatsapp: org.whatsapp };
+    const images = await this.petImageRepository.findManyByPetId(pet.id);
+
+    return { pet, whatsapp: org.whatsapp, images };
   }
 }

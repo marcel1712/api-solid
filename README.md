@@ -31,6 +31,7 @@ pet can update it.
 ## Features
 
 - Register a pet
+- Upload up to 3 photos per pet, stored on Cloudflare R2
 - List all pets available for adoption in a given city
 - Filter pets by characteristics (age, size, type)
 - View details of a specific pet
@@ -48,6 +49,7 @@ pet can update it.
 - An org must be authenticated to perform administrative actions
   (registering a pet, updating its adoption status)
 - Only the org that registered a pet can update its adoption status
+- A pet can have at most 3 images; only the owning org can upload or remove them
 
 ## Tech Stack
 
@@ -62,6 +64,7 @@ pet can update it.
 | Password hashing | bcrypt                                         |
 | Testing        | [Vitest](https://vitest.dev) (unit + e2e)        |
 | Linting        | ESLint + typescript-eslint                       |
+| Object storage | Cloudflare R2 (S3-compatible)                    |
 | Local infra    | Docker Compose (PostgreSQL)                      |
 
 ## Architecture
@@ -99,6 +102,11 @@ Prisma / PostgreSQL   or   In-Memory (tests)
   (`src/http/error-handler.ts`) maps each type to the right HTTP status. This
   means every controller stays a thin, linear function — no repeated
   try/catch or status-code logic to maintain.
+- **Direct-to-storage uploads**: pet images never pass through the API
+  server. `POST /pets/:id/images` returns a short-lived pre-signed URL
+  (`@aws-sdk/s3-request-presigner`) that the client uses to `PUT` the file
+  straight to Cloudflare R2, keeping the backend stateless with respect to
+  binary data and avoiding memory/bandwidth pressure on the server.
 
 ## Security
 
@@ -141,12 +149,21 @@ Base routes are prefixed with `/orgs` and `/pets`.
 | `POST`  | `/pets`               |    **Yes**    | Register a pet for the authenticated org      |
 | `GET`   | `/pets/:id`           |      No       | Get a pet's details, including the owning org's WhatsApp |
 | `PATCH` | `/pets/:id`           |    **Yes**    | Update a pet's mutable information (owner org only; adoption status can't be changed here) |
-| `GET`   | `/pets/search`        |      No       | List available (non-adopted) pets by city, with optional filters (`ageMin`, `ageMax`, `size`, `type`) and pagination (`page`). Each pet includes the owning org's `whatsapp` |
+| `GET`   | `/pets/search`        |      No       | List available (non-adopted) pets by city, with optional filters (`ageMin`, `ageMax`, `size`, `type`) and pagination (`page`). Each pet includes the owning org's `whatsapp` and its `images` |
 | `PATCH` | `/pets/:id/adopt`     |    **Yes**    | Mark a pet as adopted/available (owner org only) |
+| `POST`  | `/pets/:id/images`    |    **Yes**    | Request a pre-signed upload URL for a new pet image (owner org only, max 3 per pet) |
+| `DELETE`| `/pets/:id/images/:imageId` | **Yes** | Delete one of the pet's images (owner org only) |
 
 **Example — search**: `GET /pets/search?city=São Paulo&page=1&size=Small&type=Dog&ageMin=0&ageMax=2`
 
 `age` is stored and returned in **years**. Already-adopted pets are excluded from search results automatically.
+
+**Image upload flow**: the client calls `POST /pets/:id/images` with
+`{ "contentType": "image/jpeg" }` (also accepts `image/png`/`image/webp`)
+and gets back `{ id, url, uploadUrl }`. It then `PUT`s the raw file bytes
+directly to `uploadUrl` (valid for 5 minutes) — the file never touches the
+API server. `url` is the final public URL to store/display once the upload
+completes.
 
 ## Data Model
 
@@ -162,12 +179,21 @@ city          String         type          AnimalType (Dog | Cat | Bird | ...)
 address       String         bio           String?
 created_at    DateTime       created_at    DateTime
                               adopted       Boolean
-1 ── * (an org has many pets)
+
+                              PetImage
+                              ─────────────────
+                              id            String (PK)
+                              petId         String (FK → Pet.id)
+                              key           String (R2 object key)
+                              url           String (public URL)
+                              created_at    DateTime
+
+1 ── * (an org has many pets)      1 ── * (a pet has up to 3 images)
 ```
 
 ## Testing
 
-The project has **106 automated tests** across **18 test files**, split into:
+The project has **131 automated tests** across **22 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge
@@ -205,7 +231,20 @@ POSTGRES_DB=
 PORT=3000
 NODE_ENV=development
 JWT_SECRET=
+
+# Cloudflare R2 (S3-compatible object storage, used for pet images)
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+R2_PUBLIC_URL=
 ```
+
+`R2_ACCOUNT_ID`/`R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY` come from an
+**Account API Token** created under R2 → Manage API Tokens (scoped to
+`Object Read & Write` on a single bucket). `R2_PUBLIC_URL` is the bucket's
+public development URL (R2 → bucket → Settings → Public Access) or a
+connected custom domain.
 
 ### 3. Start the database
 
@@ -242,7 +281,7 @@ src/
 │   ├── utils/             # JWT token generation
 │   ├── error-handler.ts   # Centralized HTTP error mapping
 │   └── routes.ts
-├── lib/                   # Prisma client singleton
+├── lib/                   # Prisma client + R2 (S3) client singletons
 ├── repositories/
 │   ├── prisma/            # Production repository implementations
 │   └── in-memory/         # In-memory implementations used by unit tests

@@ -1,7 +1,7 @@
 import { makeGetPetUseCase } from "@/use-cases/factories/make-get-pet-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { AnimalSize, AnimalType } from "@prisma/client";
+import { AnimalSize, AnimalType, PetImage } from "@prisma/client";
 
 interface GetPetDetailsResponse {
     id: string,
@@ -13,7 +13,8 @@ interface GetPetDetailsResponse {
     size: AnimalSize,
     bio: string | null,
     adopted: boolean,
-    whatsapp: string
+    whatsapp: string,
+    images: PetImage[]
 }
 
 export async function getPetDetailsController(
@@ -27,11 +28,11 @@ export async function getPetDetailsController(
     const { id } = getPetParamsScheme.parse(request.params);
 
     const getPetUseCase = makeGetPetUseCase();
-    const { pet, whatsapp } = await getPetUseCase.execute({
+    const { pet, whatsapp, images } = await getPetUseCase.execute({
         petId: id
     })
 
-    const petDetails: GetPetDetailsResponse = { ...pet, whatsapp };
+    const petDetails: GetPetDetailsResponse = { ...pet, whatsapp, images };
 
     return reply.status(200).send(petDetails);
 }

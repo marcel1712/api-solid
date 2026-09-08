@@ -8,6 +8,8 @@ import { authenticateOrgController } from "./controllers/org/authenticateOrgCont
 import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityController";
 import { markPetAsAdoptedController } from "./controllers/pet/markPetAsAdoptedController";
 import { updatePetController } from "./controllers/pet/updatePetController";
+import { requestPetImageUploadController } from "./controllers/pet/requestPetImageUploadController";
+import { deletePetImageController } from "./controllers/pet/deletePetImageController";
 import { verifyJwt } from "./middlewares/verify-jwt";
 
 export async function orgRoutes(app: FastifyInstance) {
@@ -23,4 +25,14 @@ export async function petRoutes(app: FastifyInstance) {
   app.get("/search", fetchPetByCityController);
   app.patch("/:id", { onRequest: [verifyJwt] }, updatePetController);
   app.patch("/:id/adopt", { onRequest: [verifyJwt] }, markPetAsAdoptedController);
+  app.post(
+    "/:id/images",
+    { onRequest: [verifyJwt] },
+    requestPetImageUploadController,
+  );
+  app.delete(
+    "/:id/images/:imageId",
+    { onRequest: [verifyJwt] },
+    deletePetImageController,
+  );
 }

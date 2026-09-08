@@ -3,12 +3,15 @@ import { PetRepository } from "../repositories/pet-repository";
 import { OrgRepository } from "../repositories/org-repository";
 import { InMemoryPetRepository } from "../repositories/in-memory/in-memory-pet-repository";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
+import { InMemoryPetImageRepository } from "../repositories/in-memory/in-memory-pet-image-repository";
+import { PetImageRepository } from "../repositories/pet-image-repository";
 import { RegisterOrgUseCase } from "./registerOrg";
 import { RegisterPetUseCase } from "./registerPet";
 import { FetchPetByCityUseCase } from "./fetchPetsByCityUseCase";
 
 let petRepository: PetRepository;
 let orgRepository: OrgRepository;
+let petImageRepository: PetImageRepository;
 let registerOrgUseCase: RegisterOrgUseCase;
 let registerPetUseCase: RegisterPetUseCase;
 let sut: FetchPetByCityUseCase;
@@ -50,7 +53,8 @@ describe("Fetch Pet By City Use Case", () => {
     orgRepository = new InMemoryOrgRepository();
     registerOrgUseCase = new RegisterOrgUseCase(orgRepository);
     registerPetUseCase = new RegisterPetUseCase(petRepository, orgRepository);
-    sut = new FetchPetByCityUseCase(petRepository, orgRepository);
+    petImageRepository = new InMemoryPetImageRepository();
+    sut = new FetchPetByCityUseCase(petRepository, orgRepository, petImageRepository);
   });
 
   it("should be able to fetch pets from a city", async () => {

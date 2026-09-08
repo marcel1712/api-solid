@@ -4,6 +4,7 @@ import { ResourceNotFoundError } from "@/use-cases/errors/resource-not-found-err
 import { NotAllowedError } from "@/use-cases/errors/not-allowed-error";
 import { InvalidCredentialsError } from "@/use-cases/errors/invalid-credentials-error";
 import { ResourceAlreadyExistsError } from "@/use-cases/errors/resource-already-exists-error";
+import { LimitExceededError } from "@/use-cases/errors/limit-exceeded-error";
 import env from "@/env/env";
 
 export function errorHandler(
@@ -31,6 +32,10 @@ export function errorHandler(
   }
 
   if (error instanceof ResourceAlreadyExistsError) {
+    return reply.status(409).send({ message: error.message });
+  }
+
+  if (error instanceof LimitExceededError) {
     return reply.status(409).send({ message: error.message });
   }
 

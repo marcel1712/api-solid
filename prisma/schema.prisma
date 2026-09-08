@@ -31,12 +31,22 @@ model Pet{
   name String
   org Org @relation(fields: [orgId], references: [id])
   orgId String
-  age Int 
+  age Int
   size AnimalSize
   type AnimalType
   bio String? @db.Text
   created_at DateTime @default(now())
   adopted Boolean @default(false)
+  images PetImage[]
+}
+
+model PetImage{
+  id String @id @default(uuid())
+  pet Pet @relation(fields: [petId], references: [id])
+  petId String
+  key String
+  url String
+  created_at DateTime @default(now())
 }
 
 enum AnimalSize {
