@@ -65,6 +65,7 @@ pet can update it.
 | Testing        | [Vitest](https://vitest.dev) (unit + e2e)        |
 | Linting        | ESLint + typescript-eslint                       |
 | Object storage | Cloudflare R2 (S3-compatible)                    |
+| Transactional email | [Resend](https://resend.com)               |
 | Local infra    | Docker Compose (PostgreSQL)                      |
 
 ## Architecture
@@ -112,6 +113,10 @@ Prisma / PostgreSQL   or   In-Memory (tests)
   persists the `PetImage` row after verifying, with a `HeadObjectCommand`,
   that the object actually landed in R2 — so a cancelled upload, a dropped
   connection or an expired URL never leaves a broken image behind.
+- **Mailer abstraction**: `Mailer` is an interface (`src/lib/mailer.ts`)
+  implemented by `ResendMailer`, so password-reset emails go through the
+  same repository-style seam as the rest of the app — easy to swap
+  providers or fake in tests without touching use cases.
 
 ## Security
 
@@ -134,7 +139,15 @@ Prisma / PostgreSQL   or   In-Memory (tests)
   dedicated route so it can't be changed as a side effect.
 - **No user enumeration**: login returns the exact same generic error
   whether the email doesn't exist or the password is wrong — an attacker
-  can't use the response to tell which one was incorrect.
+  can't use the response to tell which one was incorrect. Password reset
+  requests follow the same rule: `POST /orgs/password/forgot` always
+  returns the same `200` response regardless of whether the email is
+  registered.
+- **Single-use, short-lived, hashed reset tokens**: a password reset token
+  is a random 32-byte value, only its SHA-256 hash is stored in the
+  database, it expires after 1 hour, is invalidated the moment it's used
+  (or replaced by a newer request), and never reveals whether it was
+  invalid because it expired, was already used, or never existed.
 - **No internal error leakage**: unexpected failures (e.g. a database
   outage) always return a generic `500` — stack traces, ORM error messages
   and file paths never reach the client.
@@ -149,6 +162,8 @@ Base routes are prefixed with `/orgs` and `/pets`.
 | ------- | --------------------- | :-----------: | ---------------------------------------------- |
 | `POST`  | `/orgs`               |      No       | Register a new org (auto-login: returns a token) |
 | `POST`  | `/orgs/sessions`      |      No       | Authenticate an org (login)                   |
+| `POST`  | `/orgs/password/forgot` |    No       | Request a password reset email (always returns the same generic response) |
+| `POST`  | `/orgs/password/reset`  |    No       | Reset the password using a valid token from the reset email |
 | `GET`   | `/orgs/:id`           |      No       | Get an org's public details (name, address, WhatsApp) |
 | `PATCH` | `/orgs/:id`           |    **Yes**    | Update the authenticated org's own information (owner only; email and password can't be changed here) |
 | `GET`   | `/orgs/me/pets`       |    **Yes**    | List the authenticated org's own pets, paginated, including adopted ones |
@@ -173,6 +188,14 @@ Base routes are prefixed with `/orgs` and `/pets`.
 3. `POST /pets/:id/images/confirm` with `{ "key": "<key from step 1>" }` →
    the backend checks the object actually exists in R2 and only then
    creates the `PetImage` row, returning it (including its `id` and `url`).
+
+**Password reset flow**:
+1. `POST /orgs/password/forgot` with `{ "email": "..." }` → always `200`.
+   If the email is registered, an email is sent (via Resend) with a link
+   to `${FRONTEND_URL}/reset-password?token=<token>`.
+2. `POST /orgs/password/reset` with `{ "token": "...", "password": "..." }`
+   → validates the token (unexpired, unused, exists), updates the
+   password, and invalidates the token.
 
 ## Data Model
 
@@ -202,7 +225,7 @@ created_at    DateTime       created_at    DateTime
 
 ## Testing
 
-The project has **153 automated tests** across **26 test files**, split into:
+The project has **170 automated tests** across **30 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge
@@ -247,6 +270,11 @@ R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=
 R2_BUCKET_NAME=
 R2_PUBLIC_URL=
+
+# Resend (transactional email, used for password reset)
+RESEND_API_KEY=
+MAIL_FROM="FindAFriend <onboarding@resend.dev>"
+FRONTEND_URL="http://localhost:5173"
 ```
 
 `R2_ACCOUNT_ID`/`R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY` come from an
@@ -254,6 +282,13 @@ R2_PUBLIC_URL=
 `Object Read & Write` on a single bucket). `R2_PUBLIC_URL` is the bucket's
 public development URL (R2 → bucket → Settings → Public Access) or a
 connected custom domain.
+
+`RESEND_API_KEY` comes from the Resend dashboard (API Keys). Without a
+verified sending domain, Resend only allows `MAIL_FROM` to use its
+`onboarding@resend.dev` sandbox address and restricts delivery to the
+account owner's own email — verify a domain before relying on this in
+production. `FRONTEND_URL` is used to build the link inside the
+password-reset email (`${FRONTEND_URL}/reset-password?token=...`).
 
 ### 3. Start the database
 

@@ -4,6 +4,8 @@ import { getPetDetailsController } from "@/http/controllers/pet/getPetDetailsCon
 import { getOrgDetailsController } from "@/http/controllers/org/getOrgDetailsController";
 import { updateOrgController } from "@/http/controllers/org/updateOrgController";
 import { getOrgPetsController } from "@/http/controllers/org/getOrgPetsController";
+import { requestPasswordResetController } from "@/http/controllers/org/requestPasswordResetController";
+import { resetPasswordController } from "@/http/controllers/org/resetPasswordController";
 import { FastifyInstance } from "fastify";
 import { authenticateOrgController } from "./controllers/org/authenticateOrgController";
 import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityController";
@@ -20,6 +22,8 @@ export async function orgRoutes(app: FastifyInstance) {
   app.get("/:id", getOrgDetailsController);
   app.patch("/:id", { onRequest: [verifyJwt] }, updateOrgController);
   app.get("/me/pets", { onRequest: [verifyJwt] }, getOrgPetsController);
+  app.post("/password/forgot", requestPasswordResetController);
+  app.post("/password/reset", resetPasswordController);
 }
 
 export async function petRoutes(app: FastifyInstance) {

@@ -13,4 +13,5 @@ export interface OrgRepository {
   findById(id: string): Promise<Org | null>;
   create(data: Prisma.OrgCreateInput): Promise<Org>;
   update(id: string, data: UpdateOrgData): Promise<Org | null>;
+  updatePassword(id: string, password_hash: string): Promise<void>;
 }

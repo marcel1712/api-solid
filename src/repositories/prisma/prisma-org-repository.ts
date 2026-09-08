@@ -50,4 +50,11 @@ export class PrismaOrgRepository implements OrgRepository {
       throw error;
     }
   }
+
+  async updatePassword(id: string, password_hash: string): Promise<void> {
+    await this.prisma.org.update({
+      where: { id },
+      data: { password_hash },
+    });
+  }
 }

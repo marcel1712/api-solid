@@ -23,7 +23,18 @@ model Org{
   address String
   created_at DateTime @default(now())
   pets Pet[]
+  passwordResetTokens PasswordResetToken[]
   @@index([city])
+}
+
+model PasswordResetToken{
+  id String @id @default(uuid())
+  org Org @relation(fields: [orgId], references: [id])
+  orgId String
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  created_at DateTime @default(now())
 }
 
 model Pet{

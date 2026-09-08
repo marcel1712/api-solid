@@ -45,6 +45,15 @@ export class InMemoryOrgRepository implements OrgRepository {
     return org;
   }
 
+  async updatePassword(id: string, password_hash: string): Promise<void> {
+    const org = await this.findById(id);
+    if (!org) {
+      return;
+    }
+
+    org.password_hash = password_hash;
+  }
+
   async create(data: Prisma.OrgCreateInput) {
     const org = {
       id: randomUUID(),

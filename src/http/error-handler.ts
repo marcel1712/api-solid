@@ -5,6 +5,7 @@ import { NotAllowedError } from "@/use-cases/errors/not-allowed-error";
 import { InvalidCredentialsError } from "@/use-cases/errors/invalid-credentials-error";
 import { ResourceAlreadyExistsError } from "@/use-cases/errors/resource-already-exists-error";
 import { LimitExceededError } from "@/use-cases/errors/limit-exceeded-error";
+import { InvalidOrExpiredTokenError } from "@/use-cases/errors/invalid-or-expired-token-error";
 import env from "@/env/env";
 
 export function errorHandler(
@@ -37,6 +38,10 @@ export function errorHandler(
 
   if (error instanceof LimitExceededError) {
     return reply.status(409).send({ message: error.message });
+  }
+
+  if (error instanceof InvalidOrExpiredTokenError) {
+    return reply.status(400).send({ message: error.message });
   }
 
   if (env.NODE_ENV !== "production") {
