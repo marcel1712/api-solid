@@ -23,6 +23,7 @@ async function createOrg() {
     city: "São Paulo",
     address: "Rua das Flores, 123",
     created_at: new Date(),
+    emailVerifiedAt: new Date(),
   });
 }
 

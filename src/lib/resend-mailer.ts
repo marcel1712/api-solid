@@ -23,4 +23,23 @@ export class ResendMailer implements Mailer {
       `,
     });
   }
+
+  async sendVerificationEmail({
+    to,
+    verifyUrl,
+  }: {
+    to: string;
+    verifyUrl: string;
+  }): Promise<void> {
+    await this.resend.emails.send({
+      from: env.MAIL_FROM,
+      to,
+      subject: "Confirm your FindAFriend email",
+      html: `
+        <p>Welcome to FindAFriend! Please confirm your email address to activate your account.</p>
+        <p><a href="${verifyUrl}">Click here to confirm your email</a></p>
+        <p>This link expires in 24 hours. If you didn't create this account, you can safely ignore this email.</p>
+      `,
+    });
+  }
 }

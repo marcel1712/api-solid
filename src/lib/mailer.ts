@@ -3,4 +3,8 @@ export interface Mailer {
     to: string;
     resetUrl: string;
   }): Promise<void>;
+  sendVerificationEmail(params: {
+    to: string;
+    verifyUrl: string;
+  }): Promise<void>;
 }

@@ -6,6 +6,7 @@ import { InvalidCredentialsError } from "@/use-cases/errors/invalid-credentials-
 import { ResourceAlreadyExistsError } from "@/use-cases/errors/resource-already-exists-error";
 import { LimitExceededError } from "@/use-cases/errors/limit-exceeded-error";
 import { InvalidOrExpiredTokenError } from "@/use-cases/errors/invalid-or-expired-token-error";
+import { EmailNotVerifiedError } from "@/use-cases/errors/email-not-verified-error";
 import env from "@/env/env";
 
 export function errorHandler(
@@ -42,6 +43,10 @@ export function errorHandler(
 
   if (error instanceof InvalidOrExpiredTokenError) {
     return reply.status(400).send({ message: error.message });
+  }
+
+  if (error instanceof EmailNotVerifiedError) {
+    return reply.status(403).send({ message: error.message });
   }
 
   if (error.statusCode === 429) {

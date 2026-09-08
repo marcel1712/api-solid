@@ -57,4 +57,11 @@ export class PrismaOrgRepository implements OrgRepository {
       data: { password_hash },
     });
   }
+
+  async markEmailAsVerified(id: string): Promise<void> {
+    await this.prisma.org.update({
+      where: { id },
+      data: { emailVerifiedAt: new Date() },
+    });
+  }
 }

@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { makeRegisterOrgUseCase } from "@/use-cases/factories/make-register-org-use-case";
+import { makeSendEmailVerificationUseCase } from "@/use-cases/factories/make-send-email-verification-use-case";
 import { generateOrgTokens } from "@/http/utils/generate-org-tokens";
 import { refreshTokenCookieOptions } from "@/http/utils/refresh-token-cookie-options";
 
@@ -32,6 +33,18 @@ export async function registerOrgController(
   });
 
   const { token, refreshToken } = await generateOrgTokens(org.id);
+
+  try {
+    const sendEmailVerificationUseCase = makeSendEmailVerificationUseCase();
+    await sendEmailVerificationUseCase.execute({
+      orgId: org.id,
+      email: org.email,
+    });
+  } catch (error) {
+    // The org is already created at this point — a flaky email provider
+    // shouldn't fail the whole registration. Verification can be re-sent.
+    request.log.error(error, "Failed to send the verification email");
+  }
 
   const { password_hash: _password_hash, ...publicOrg } = org;
 

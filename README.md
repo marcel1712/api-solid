@@ -51,6 +51,10 @@ pet can update it.
   (registering a pet, updating its adoption status)
 - Only the org that registered a pet can update its adoption status
 - A pet can have at most 3 images; only the owning org can upload or remove them
+- An org must verify its email (link sent on registration) before it can
+  log in — registration itself still returns a working session token, so
+  the newly registered org isn't locked out of its own account while
+  waiting for the email
 
 ## Tech Stack
 
@@ -149,6 +153,10 @@ Prisma / PostgreSQL   or   In-Memory (tests)
   database, it expires after 1 hour, is invalidated the moment it's used
   (or replaced by a newer request), and never reveals whether it was
   invalid because it expired, was already used, or never existed.
+- **Email verification gate**: `AuthenticateOrgUseCase` rejects login
+  (`403`) for an org that hasn't confirmed its email yet. Verification
+  tokens follow the exact same single-use/hashed/short-lived pattern as
+  password reset tokens (24h expiry instead of 1h).
 - **No internal error leakage**: unexpected failures (e.g. a database
   outage) always return a generic `500` — stack traces, ORM error messages
   and file paths never reach the client.
@@ -170,8 +178,9 @@ Base routes are prefixed with `/orgs` and `/pets`.
 
 | Method  | Endpoint             | Auth required | Description                                   |
 | ------- | --------------------- | :-----------: | ---------------------------------------------- |
-| `POST`  | `/orgs`               |      No       | Register a new org (auto-login: returns a token) |
-| `POST`  | `/orgs/sessions`      |      No       | Authenticate an org (login)                   |
+| `POST`  | `/orgs`               |      No       | Register a new org (auto-login: returns a token; sends a verification email) |
+| `POST`  | `/orgs/sessions`      |      No       | Authenticate an org (login; requires a verified email) |
+| `GET`   | `/orgs/verify-email`  |      No       | Confirm the org's email using the token from the verification email |
 | `POST`  | `/orgs/password/forgot` |    No       | Request a password reset email (always returns the same generic response) |
 | `POST`  | `/orgs/password/reset`  |    No       | Reset the password using a valid token from the reset email |
 | `GET`   | `/orgs/:id`           |      No       | Get an org's public details (name, address, WhatsApp) |
@@ -207,6 +216,15 @@ Base routes are prefixed with `/orgs` and `/pets`.
    → validates the token (unexpired, unused, exists), updates the
    password, and invalidates the token.
 
+**Email verification flow**:
+1. On `POST /orgs`, right after the org is created, an email is sent
+   (via Resend) with a link to
+   `${FRONTEND_URL}/verify-email?token=<token>`. A failure to send this
+   email doesn't fail the registration request.
+2. `GET /orgs/verify-email?token=...` → validates the token and marks the
+   org's email as verified. `POST /orgs/sessions` rejects login with
+   `403` until this step is done.
+
 ## Data Model
 
 ```
@@ -220,7 +238,7 @@ whatsapp      String (unique) size          AnimalSize (Small | Medium | Large)
 city          String         type          AnimalType (Dog | Cat | Bird | ...)
 address       String         bio           String?
 created_at    DateTime       created_at    DateTime
-                              adopted       Boolean
+emailVerifiedAt DateTime?     adopted       Boolean
 
                               PetImage
                               ─────────────────
@@ -235,7 +253,7 @@ created_at    DateTime       created_at    DateTime
 
 ## Testing
 
-The project has **170 automated tests** across **30 test files**, split into:
+The project has **186 automated tests** across **33 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge

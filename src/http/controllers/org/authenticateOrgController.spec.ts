@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+import { prisma } from "@/lib/prisma";
 
 function randomWhatsapp() {
   return `+551199${Math.floor(1000000 + Math.random() * 8999999)}`;
 }
 
-async function createOrg() {
+async function createOrg(options: { verified?: boolean } = {}) {
+  const { verified = true } = options;
   const email = `${randomUUID()}@email.com`;
   const password = "password123";
 
@@ -22,6 +24,13 @@ async function createOrg() {
       address: "Rua das Flores, 900",
     },
   });
+
+  if (verified) {
+    await prisma.org.update({
+      where: { email },
+      data: { emailVerifiedAt: new Date() },
+    });
+  }
 
   return { email, password };
 }
@@ -90,5 +99,19 @@ describe("Authenticate Org Controller (e2e)", () => {
     });
 
     expect(response.statusCode).toEqual(400);
+  });
+
+  it("should not be able to authenticate before verifying the email", async () => {
+    await app.ready();
+
+    const { email, password } = await createOrg({ verified: false });
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs/sessions",
+      payload: { email, password },
+    });
+
+    expect(response.statusCode).toEqual(403);
   });
 });

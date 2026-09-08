@@ -54,6 +54,15 @@ export class InMemoryOrgRepository implements OrgRepository {
     org.password_hash = password_hash;
   }
 
+  async markEmailAsVerified(id: string): Promise<void> {
+    const org = await this.findById(id);
+    if (!org) {
+      return;
+    }
+
+    org.emailVerifiedAt = new Date();
+  }
+
   async create(data: Prisma.OrgCreateInput) {
     const org = {
       id: randomUUID(),
@@ -64,6 +73,7 @@ export class InMemoryOrgRepository implements OrgRepository {
       city: data.city,
       address: data.address,
       created_at: new Date(),
+      emailVerifiedAt: null,
     };
 
     this.items.push(org);

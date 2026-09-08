@@ -22,12 +22,24 @@ model Org{
   city String
   address String
   created_at DateTime @default(now())
+  emailVerifiedAt DateTime?
   pets Pet[]
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
   @@index([city])
 }
 
 model PasswordResetToken{
+  id String @id @default(uuid())
+  org Org @relation(fields: [orgId], references: [id])
+  orgId String
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  created_at DateTime @default(now())
+}
+
+model EmailVerificationToken{
   id String @id @default(uuid())
   org Org @relation(fields: [orgId], references: [id])
   orgId String

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+import { prisma } from "@/lib/prisma";
 
 function randomWhatsapp() {
   return `+551199${Math.floor(1000000 + Math.random() * 8999999)}`;
@@ -20,7 +21,13 @@ async function createOrg() {
     },
   });
 
-  return response.json();
+  const org = response.json();
+  await prisma.org.update({
+    where: { id: org.id },
+    data: { emailVerifiedAt: new Date() },
+  });
+
+  return org;
 }
 
 describe("Update Org Controller (e2e)", () => {

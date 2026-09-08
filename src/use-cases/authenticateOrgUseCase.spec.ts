@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { AuthenticateOrgUseCase } from "../use-cases/authenticateOrgUseCase";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
 import { RegisterOrgUseCase } from "./registerOrg";
+import { EmailNotVerifiedError } from "./errors/email-not-verified-error";
 
 let orgRepository: OrgRepository;
 let registerUseCase: RegisterOrgUseCase;
@@ -24,6 +25,7 @@ describe("Authenticate Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
     });
+    await orgRepository.markEmailAsVerified(org.id);
 
     const logedOrg = await sut.execute({
       email: "petfriends@email.com",
@@ -31,6 +33,24 @@ describe("Authenticate Org Use Case", () => {
     });
 
     expect(logedOrg.org.email).toBe(org.email);
+  });
+
+  it("should not be able to authenticate before verifying the email", async () => {
+    await registerUseCase.execute({
+      name: "Pet Friends ",
+      email: "petfriends@email.com",
+      password: "password123",
+      whatsapp: "11999999999",
+      city: "São Paulo",
+      address: "Rua das Flores, 123",
+    });
+
+    await expect(() =>
+      sut.execute({
+        email: "petfriends@email.com",
+        password: "password123",
+      }),
+    ).rejects.toBeInstanceOf(EmailNotVerifiedError);
   });
 
   it("should not be able to authenticate with a non-existing email", async () => {
@@ -61,7 +81,7 @@ describe("Authenticate Org Use Case", () => {
   });
 
   it("should not expose the password hash on the authenticated org", async () => {
-    await registerUseCase.execute({
+    const { org } = await registerUseCase.execute({
       name: "Pet Friends ",
       email: "petfriends@email.com",
       password: "password123",
@@ -69,6 +89,7 @@ describe("Authenticate Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
     });
+    await orgRepository.markEmailAsVerified(org.id);
 
     const logedOrg = await sut.execute({
       email: "petfriends@email.com",

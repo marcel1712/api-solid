@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import app from "@/app";
+import { prisma } from "@/lib/prisma";
 
 const { sendMock } = vi.hoisted(() => ({
   sendMock: vi.fn().mockResolvedValue({ data: { id: "email-id" }, error: null }),
@@ -31,7 +32,13 @@ async function createOrg() {
     },
   });
 
-  return response.json();
+  const org = response.json();
+  await prisma.org.update({
+    where: { id: org.id },
+    data: { emailVerifiedAt: new Date() },
+  });
+
+  return org;
 }
 
 async function requestResetToken(email: string) {

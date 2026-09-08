@@ -47,6 +47,7 @@ describe("Request Password Reset Controller (e2e)", () => {
     await app.ready();
 
     const org = await createOrg();
+    sendMock.mockClear();
 
     const response = await app.inject({
       method: "POST",

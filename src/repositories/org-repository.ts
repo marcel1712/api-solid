@@ -14,4 +14,5 @@ export interface OrgRepository {
   create(data: Prisma.OrgCreateInput): Promise<Org>;
   update(id: string, data: UpdateOrgData): Promise<Org | null>;
   updatePassword(id: string, password_hash: string): Promise<void>;
+  markEmailAsVerified(id: string): Promise<void>;
 }

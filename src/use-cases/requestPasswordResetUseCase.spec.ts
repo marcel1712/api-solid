@@ -15,6 +15,8 @@ class FakeMailer implements Mailer {
   }): Promise<void> {
     this.sentEmails.push(params);
   }
+
+  async sendVerificationEmail(): Promise<void> {}
 }
 
 let orgRepository: OrgRepository;

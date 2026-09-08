@@ -2,6 +2,7 @@ import { OrgRepository } from "@/repositories/org-repository";
 import { Org } from "@prisma/client";
 import { compare } from "bcrypt";
 import { InvalidCredentialsError } from "@/use-cases/errors/invalid-credentials-error";
+import { EmailNotVerifiedError } from "@/use-cases/errors/email-not-verified-error";
 
 interface AuthenticateOrgRequest {
   email: string;
@@ -29,6 +30,10 @@ export class AuthenticateOrgUseCase {
 
     if (!passwordMatches) {
       throw new InvalidCredentialsError();
+    }
+
+    if (!org.emailVerifiedAt) {
+      throw new EmailNotVerifiedError();
     }
 
     const { created_at: _created_at, password_hash: _password_hash, ...orgPreview } = org;
