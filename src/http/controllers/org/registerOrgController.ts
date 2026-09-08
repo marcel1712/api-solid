@@ -2,7 +2,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { makeRegisterOrgUseCase } from "@/use-cases/factories/make-register-org-use-case";
 import { generateOrgTokens } from "@/http/utils/generate-org-tokens";
-import env from "@/env/env";
+import { refreshTokenCookieOptions } from "@/http/utils/refresh-token-cookie-options";
 
 export async function registerOrgController(
   request: FastifyRequest,
@@ -37,12 +37,7 @@ export async function registerOrgController(
 
   return reply
     .status(201)
-    .setCookie("refreshToken", refreshToken, {
-      path: "/",
-      secure: env.NODE_ENV === "production",
-      sameSite: true,
-      httpOnly: true,
-    })
+    .setCookie("refreshToken", refreshToken, refreshTokenCookieOptions)
     .send({
       ...publicOrg,
       token,

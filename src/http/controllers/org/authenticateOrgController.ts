@@ -1,8 +1,8 @@
 import { makeAuthenticateOrgUseCase } from "@/use-cases/factories/make-authenticate-org-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import env from "@/env/env";
 import { generateOrgTokens } from "@/http/utils/generate-org-tokens";
+import { refreshTokenCookieOptions } from "@/http/utils/refresh-token-cookie-options";
 
 export async function authenticateOrgController(
   request: FastifyRequest,
@@ -23,11 +23,6 @@ export async function authenticateOrgController(
 
   return reply
     .status(200)
-    .setCookie("refreshToken", refreshToken, {
-      path: "/",
-      secure: env.NODE_ENV === "production",
-      sameSite: true,
-      httpOnly: true,
-    })
+    .setCookie("refreshToken", refreshToken, refreshTokenCookieOptions)
     .send({ token });
 }

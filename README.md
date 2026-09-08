@@ -18,6 +18,7 @@ business rules fully decoupled from the HTTP and database layers.
 - [Data Model](#data-model)
 - [Testing](#testing)
 - [Getting Started](#getting-started)
+- [Deployment](#deployment)
 - [Project Structure](#project-structure)
 
 ## Overview
@@ -313,6 +314,54 @@ npm run dev
 ```bash
 npm test
 ```
+
+## Deployment
+
+The API is deployed as a **Render** web service backed by a **Neon**
+(serverless Postgres) database.
+
+### 1. Database (Neon)
+
+1. Create a project at [neon.tech](https://neon.tech) and copy its
+   connection string — it already includes `?sslmode=require`, which
+   `pg`/Prisma pick up automatically; don't strip it.
+2. Use that string as `DATABASE_URL`. No manual migration step is needed:
+   the `start` script runs `prisma migrate deploy` before booting the
+   server, so every deploy keeps the schema in sync.
+
+### 2. API (Render)
+
+1. Create a **Web Service** from this repository.
+2. **Build Command**: `npm install` (a `postinstall` hook runs
+   `prisma generate` automatically).
+3. **Start Command**: `npm start`.
+4. Set every variable from `.env` (see [Configure environment
+   variables](#2-configure-environment-variables)) in Render's
+   Environment tab, with production values:
+   - `DATABASE_URL` — the Neon connection string.
+   - `NODE_ENV=production` — switches cookies to `secure: true` /
+     `sameSite: "none"` (required for a cross-domain frontend) and
+     suppresses verbose error logging.
+   - `FRONTEND_URL` — the deployed frontend's origin. Used both to build
+     the password-reset link **and** as the allowed CORS origin, so it
+     must be the exact origin the frontend is served from (no trailing
+     slash).
+   - `R2_PUBLIC_URL`, `RESEND_API_KEY`, etc. — same values as local dev,
+     pointing at production resources.
+   - Don't set `PORT` — Render injects it automatically and the app
+     already binds to it.
+5. The app listens on `0.0.0.0` (required for Render's network layer to
+   reach it) and exposes `GET /` as a trivial health check.
+
+### Notes
+
+- **CORS** (`@fastify/cors`) only allows requests from `FRONTEND_URL`,
+  with `credentials: true` so the refresh-token cookie can be sent.
+  Multiple frontend origins (e.g. a staging environment) aren't supported
+  by a single string — extend `src/app.ts` to pass an array or function
+  to `origin` if you need that.
+- Redeploying re-runs `prisma migrate deploy`, which only applies
+  pending migrations — it's safe to redeploy without new migrations.
 
 ## Project Structure
 
