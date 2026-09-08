@@ -40,6 +40,31 @@ async function createPet(token: string) {
   return response.json();
 }
 
+async function uploadAndConfirmImage(token: string, petId: string) {
+  const requestResponse = await app.inject({
+    method: "POST",
+    url: `/pets/${petId}/images`,
+    headers: { authorization: `Bearer ${token}` },
+    payload: { contentType: "image/jpeg" },
+  });
+  const { key, uploadUrl } = requestResponse.json();
+
+  await fetch(uploadUrl, {
+    method: "PUT",
+    body: Buffer.from("fake-image-bytes"),
+    headers: { "Content-Type": "image/jpeg" },
+  });
+
+  const confirmResponse = await app.inject({
+    method: "POST",
+    url: `/pets/${petId}/images/confirm`,
+    headers: { authorization: `Bearer ${token}` },
+    payload: { key },
+  });
+
+  return confirmResponse.json();
+}
+
 describe("Request Pet Image Upload Controller (e2e)", () => {
   afterAll(async () => {
     await app.close();
@@ -61,26 +86,42 @@ describe("Request Pet Image Upload Controller (e2e)", () => {
     expect(response.statusCode).toEqual(201);
     expect(response.json()).toEqual(
       expect.objectContaining({
-        id: expect.any(String),
+        key: expect.stringContaining(pet.id),
         url: expect.stringContaining(pet.id),
         uploadUrl: expect.stringContaining("https://"),
       }),
     );
   });
 
-  it("should not be able to request a 4th image for the same pet", async () => {
+  it("should not persist an image that was requested but never uploaded", async () => {
+    await app.ready();
+
+    const org = await createOrg();
+    const pet = await createPet(org.token);
+
+    await app.inject({
+      method: "POST",
+      url: `/pets/${pet.id}/images`,
+      headers: { authorization: `Bearer ${org.token}` },
+      payload: { contentType: "image/jpeg" },
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: `/pets/${pet.id}`,
+    });
+
+    expect(response.json().images).toHaveLength(0);
+  });
+
+  it("should not be able to request a 4th image once 3 have been confirmed", async () => {
     await app.ready();
 
     const org = await createOrg();
     const pet = await createPet(org.token);
 
     for (let i = 0; i < 3; i++) {
-      await app.inject({
-        method: "POST",
-        url: `/pets/${pet.id}/images`,
-        headers: { authorization: `Bearer ${org.token}` },
-        payload: { contentType: "image/jpeg" },
-      });
+      await uploadAndConfirmImage(org.token, pet.id);
     }
 
     const response = await app.inject({

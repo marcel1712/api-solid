@@ -107,6 +107,11 @@ Prisma / PostgreSQL   or   In-Memory (tests)
   (`@aws-sdk/s3-request-presigner`) that the client uses to `PUT` the file
   straight to Cloudflare R2, keeping the backend stateless with respect to
   binary data and avoiding memory/bandwidth pressure on the server.
+- **No orphaned image records**: nothing is written to the database when
+  an upload URL is requested. `POST /pets/:id/images/confirm` only
+  persists the `PetImage` row after verifying, with a `HeadObjectCommand`,
+  that the object actually landed in R2 — so a cancelled upload, a dropped
+  connection or an expired URL never leaves a broken image behind.
 
 ## Security
 
@@ -153,18 +158,21 @@ Base routes are prefixed with `/orgs` and `/pets`.
 | `GET`   | `/pets/search`        |      No       | List available (non-adopted) pets by city, with optional filters (`ageMin`, `ageMax`, `size`, `type`) and pagination (`page`). Each pet includes the owning org's `whatsapp` and its `images` |
 | `PATCH` | `/pets/:id/adopt`     |    **Yes**    | Mark a pet as adopted/available (owner org only) |
 | `POST`  | `/pets/:id/images`    |    **Yes**    | Request a pre-signed upload URL for a new pet image (owner org only, max 3 per pet) |
+| `POST`  | `/pets/:id/images/confirm` | **Yes** | Confirm a completed upload, turning it into a persisted image |
 | `DELETE`| `/pets/:id/images/:imageId` | **Yes** | Delete one of the pet's images (owner org only) |
 
 **Example — search**: `GET /pets/search?city=São Paulo&page=1&size=Small&type=Dog&ageMin=0&ageMax=2`
 
 `age` is stored and returned in **years**. Already-adopted pets are excluded from search results automatically.
 
-**Image upload flow**: the client calls `POST /pets/:id/images` with
-`{ "contentType": "image/jpeg" }` (also accepts `image/png`/`image/webp`)
-and gets back `{ id, url, uploadUrl }`. It then `PUT`s the raw file bytes
-directly to `uploadUrl` (valid for 5 minutes) — the file never touches the
-API server. `url` is the final public URL to store/display once the upload
-completes.
+**Image upload flow** (3 steps, nothing is persisted until step 3 succeeds):
+1. `POST /pets/:id/images` with `{ "contentType": "image/jpeg" }` (also
+   accepts `image/png`/`image/webp`) → returns `{ key, url, uploadUrl }`.
+2. The client `PUT`s the raw file bytes directly to `uploadUrl` (valid for
+   5 minutes) — the file never touches the API server.
+3. `POST /pets/:id/images/confirm` with `{ "key": "<key from step 1>" }` →
+   the backend checks the object actually exists in R2 and only then
+   creates the `PetImage` row, returning it (including its `id` and `url`).
 
 ## Data Model
 
@@ -194,7 +202,7 @@ created_at    DateTime       created_at    DateTime
 
 ## Testing
 
-The project has **141 automated tests** across **24 test files**, split into:
+The project has **153 automated tests** across **26 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge

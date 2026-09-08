@@ -40,15 +40,29 @@ async function createPet(token: string) {
   return response.json();
 }
 
-async function requestImageUpload(token: string, petId: string) {
-  const response = await app.inject({
+async function uploadAndConfirmImage(token: string, petId: string) {
+  const requestResponse = await app.inject({
     method: "POST",
     url: `/pets/${petId}/images`,
     headers: { authorization: `Bearer ${token}` },
     payload: { contentType: "image/jpeg" },
   });
+  const { key, uploadUrl } = requestResponse.json();
 
-  return response.json();
+  await fetch(uploadUrl, {
+    method: "PUT",
+    body: Buffer.from("fake-image-bytes"),
+    headers: { "Content-Type": "image/jpeg" },
+  });
+
+  const confirmResponse = await app.inject({
+    method: "POST",
+    url: `/pets/${petId}/images/confirm`,
+    headers: { authorization: `Bearer ${token}` },
+    payload: { key },
+  });
+
+  return confirmResponse.json();
 }
 
 describe("Delete Pet Image Controller (e2e)", () => {
@@ -61,7 +75,7 @@ describe("Delete Pet Image Controller (e2e)", () => {
 
     const org = await createOrg();
     const pet = await createPet(org.token);
-    const image = await requestImageUpload(org.token, pet.id);
+    const image = await uploadAndConfirmImage(org.token, pet.id);
 
     const response = await app.inject({
       method: "DELETE",
@@ -80,7 +94,7 @@ describe("Delete Pet Image Controller (e2e)", () => {
 
     const images = [];
     for (let i = 0; i < 3; i++) {
-      images.push(await requestImageUpload(org.token, pet.id));
+      images.push(await uploadAndConfirmImage(org.token, pet.id));
     }
 
     await app.inject({
@@ -104,7 +118,7 @@ describe("Delete Pet Image Controller (e2e)", () => {
 
     const owner = await createOrg();
     const pet = await createPet(owner.token);
-    const image = await requestImageUpload(owner.token, pet.id);
+    const image = await uploadAndConfirmImage(owner.token, pet.id);
     const otherOrg = await createOrg();
 
     const response = await app.inject({
@@ -121,7 +135,7 @@ describe("Delete Pet Image Controller (e2e)", () => {
 
     const org = await createOrg();
     const pet = await createPet(org.token);
-    const image = await requestImageUpload(org.token, pet.id);
+    const image = await uploadAndConfirmImage(org.token, pet.id);
 
     const response = await app.inject({
       method: "DELETE",

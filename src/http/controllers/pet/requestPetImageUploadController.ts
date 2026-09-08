@@ -22,15 +22,11 @@ export async function requestPetImageUploadController(
   const orgId = request.orgId as string;
 
   const requestPetImageUploadUseCase = makeRequestPetImageUploadUseCase();
-  const { image, uploadUrl } = await requestPetImageUploadUseCase.execute({
+  const { key, url, uploadUrl } = await requestPetImageUploadUseCase.execute({
     petId,
     orgId,
     contentType,
   });
 
-  return reply.status(201).send({
-    id: image.id,
-    url: image.url,
-    uploadUrl,
-  });
+  return reply.status(201).send({ key, url, uploadUrl });
 }

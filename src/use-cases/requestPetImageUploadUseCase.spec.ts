@@ -41,17 +41,18 @@ describe("Request Pet Image Upload Use Case", () => {
   it("should be able to request an image upload for a pet", async () => {
     const pet = await createPet();
 
-    const { image, uploadUrl } = await sut.execute({
+    const { key, url, uploadUrl } = await sut.execute({
       petId: pet.id,
       orgId: "org-01",
       contentType: "image/jpeg",
     });
 
-    expect(image.petId).toEqual(pet.id);
+    expect(key).toContain(pet.id);
+    expect(url).toContain(key);
     expect(uploadUrl).toEqual("https://r2.example.com/signed-upload-url");
   });
 
-  it("should persist the image record", async () => {
+  it("should not persist anything before the upload is confirmed", async () => {
     const pet = await createPet();
 
     await sut.execute({
@@ -62,7 +63,7 @@ describe("Request Pet Image Upload Use Case", () => {
 
     expect(
       (petImageRepository as InMemoryPetImageRepository).items,
-    ).toHaveLength(1);
+    ).toHaveLength(0);
   });
 
   it("should not be able to request an upload for a non-existing pet", async () => {
@@ -87,14 +88,14 @@ describe("Request Pet Image Upload Use Case", () => {
     ).rejects.toBeInstanceOf(NotAllowedError);
   });
 
-  it("should not be able to request a 4th image for the same pet", async () => {
+  it("should not be able to request a 4th image for a pet that already has 3 confirmed images", async () => {
     const pet = await createPet();
 
     for (let i = 0; i < 3; i++) {
-      await sut.execute({
+      await petImageRepository.create({
         petId: pet.id,
-        orgId: "org-01",
-        contentType: "image/jpeg",
+        key: `pets/${pet.id}/image-${i}.jpg`,
+        url: `https://example.com/pets/${pet.id}/image-${i}.jpg`,
       });
     }
 

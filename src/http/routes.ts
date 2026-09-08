@@ -10,6 +10,7 @@ import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityContro
 import { markPetAsAdoptedController } from "./controllers/pet/markPetAsAdoptedController";
 import { updatePetController } from "./controllers/pet/updatePetController";
 import { requestPetImageUploadController } from "./controllers/pet/requestPetImageUploadController";
+import { confirmPetImageUploadController } from "./controllers/pet/confirmPetImageUploadController";
 import { deletePetImageController } from "./controllers/pet/deletePetImageController";
 import { verifyJwt } from "./middlewares/verify-jwt";
 
@@ -31,6 +32,11 @@ export async function petRoutes(app: FastifyInstance) {
     "/:id/images",
     { onRequest: [verifyJwt] },
     requestPetImageUploadController,
+  );
+  app.post(
+    "/:id/images/confirm",
+    { onRequest: [verifyJwt] },
+    confirmPetImageUploadController,
   );
   app.delete(
     "/:id/images/:imageId",

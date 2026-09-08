@@ -1,6 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { HeadObjectCommand, NotFound } from "@aws-sdk/client-s3";
+import { PetImage } from "@prisma/client";
 import { PetRepository } from "@/repositories/pet-repository";
 import { PetImageRepository } from "@/repositories/pet-image-repository";
 import { ResourceNotFoundError } from "@/use-cases/errors/resource-not-found-error";
@@ -10,29 +9,20 @@ import { r2 } from "@/lib/r2";
 import env from "@/env/env";
 
 const MAX_IMAGES_PER_PET = 3;
-const UPLOAD_URL_EXPIRES_IN_SECONDS = 5 * 60;
 
-interface RequestPetImageUploadRequest {
+interface ConfirmPetImageUploadRequest {
   petId: string;
   orgId: string;
-  contentType: string;
-}
-
-interface RequestPetImageUploadResponse {
   key: string;
-  url: string;
-  uploadUrl: string;
 }
 
-export class RequestPetImageUploadUseCase {
+export class ConfirmPetImageUploadUseCase {
   constructor(
     private petRepository: PetRepository,
     private petImageRepository: PetImageRepository,
   ) {}
 
-  async execute(
-    request: RequestPetImageUploadRequest,
-  ): Promise<RequestPetImageUploadResponse> {
+  async execute(request: ConfirmPetImageUploadRequest): Promise<PetImage> {
     const pet = await this.petRepository.findById(request.petId);
 
     if (!pet) {
@@ -40,6 +30,10 @@ export class RequestPetImageUploadUseCase {
     }
 
     if (pet.orgId !== request.orgId) {
+      throw new NotAllowedError();
+    }
+
+    if (!request.key.startsWith(`pets/${request.petId}/`)) {
       throw new NotAllowedError();
     }
 
@@ -53,20 +47,26 @@ export class RequestPetImageUploadUseCase {
       );
     }
 
-    const extension = request.contentType.split("/")[1];
-    const key = `pets/${request.petId}/${randomUUID()}.${extension}`;
-    const url = `${env.R2_PUBLIC_URL}/${key}`;
+    try {
+      await r2.send(
+        new HeadObjectCommand({
+          Bucket: env.R2_BUCKET_NAME,
+          Key: request.key,
+        }),
+      );
+    } catch (error) {
+      if (error instanceof NotFound) {
+        throw new ResourceNotFoundError();
+      }
+      throw error;
+    }
 
-    const uploadUrl = await getSignedUrl(
-      r2,
-      new PutObjectCommand({
-        Bucket: env.R2_BUCKET_NAME,
-        Key: key,
-        ContentType: request.contentType,
-      }),
-      { expiresIn: UPLOAD_URL_EXPIRES_IN_SECONDS },
-    );
+    const url = `${env.R2_PUBLIC_URL}/${request.key}`;
 
-    return { key, url, uploadUrl };
+    return this.petImageRepository.create({
+      petId: request.petId,
+      key: request.key,
+      url,
+    });
   }
 }
