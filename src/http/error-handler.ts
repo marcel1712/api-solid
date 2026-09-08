@@ -44,6 +44,10 @@ export function errorHandler(
     return reply.status(400).send({ message: error.message });
   }
 
+  if (error.statusCode === 429) {
+    return reply.status(429).send({ message: error.message });
+  }
+
   if (env.NODE_ENV !== "production") {
     console.error(error);
   }

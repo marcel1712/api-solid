@@ -152,6 +152,15 @@ Prisma / PostgreSQL   or   In-Memory (tests)
 - **No internal error leakage**: unexpected failures (e.g. a database
   outage) always return a generic `500` — stack traces, ORM error messages
   and file paths never reach the client.
+- **Rate limiting** (`@fastify/cors` + `@fastify/rate-limit`): every route
+  is capped at 100 requests/minute per IP by default, with stricter
+  per-route limits on the endpoints most attractive to abuse —
+  `POST /orgs` and `POST /orgs/password/forgot` (5/hour), `POST
+  /orgs/sessions` (5/minute, brute-force protection), and `POST
+  /orgs/password/reset` (10/hour). Disabled when `NODE_ENV=test` so the
+  test suite isn't affected. Requires `trustProxy: true` (set on the
+  Fastify instance) to key limits by the real client IP behind Render's
+  proxy instead of the proxy's own IP.
 - Sensitive fields (`password_hash`) are always stripped before a response
   is sent, on every endpoint that returns org data.
 

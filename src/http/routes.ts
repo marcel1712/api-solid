@@ -17,13 +17,29 @@ import { deletePetImageController } from "./controllers/pet/deletePetImageContro
 import { verifyJwt } from "./middlewares/verify-jwt";
 
 export async function orgRoutes(app: FastifyInstance) {
-  app.post("/", registerOrgController);
-  app.post("/sessions", authenticateOrgController);
+  app.post(
+    "/",
+    { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
+    registerOrgController,
+  );
+  app.post(
+    "/sessions",
+    { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+    authenticateOrgController,
+  );
   app.get("/:id", getOrgDetailsController);
   app.patch("/:id", { onRequest: [verifyJwt] }, updateOrgController);
   app.get("/me/pets", { onRequest: [verifyJwt] }, getOrgPetsController);
-  app.post("/password/forgot", requestPasswordResetController);
-  app.post("/password/reset", resetPasswordController);
+  app.post(
+    "/password/forgot",
+    { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
+    requestPasswordResetController,
+  );
+  app.post(
+    "/password/reset",
+    { config: { rateLimit: { max: 10, timeWindow: "1 hour" } } },
+    resetPasswordController,
+  );
 }
 
 export async function petRoutes(app: FastifyInstance) {
