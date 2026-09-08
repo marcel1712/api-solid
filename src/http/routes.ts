@@ -7,6 +7,7 @@ import { getOrgPetsController } from "@/http/controllers/org/getOrgPetsControlle
 import { requestPasswordResetController } from "@/http/controllers/org/requestPasswordResetController";
 import { resetPasswordController } from "@/http/controllers/org/resetPasswordController";
 import { verifyEmailController } from "@/http/controllers/org/verifyEmailController";
+import { resendEmailVerificationController } from "@/http/controllers/org/resendEmailVerificationController";
 import { FastifyInstance } from "fastify";
 import { authenticateOrgController } from "./controllers/org/authenticateOrgController";
 import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityController";
@@ -45,6 +46,11 @@ export async function orgRoutes(app: FastifyInstance) {
     "/verify-email",
     { config: { rateLimit: { max: 20, timeWindow: "1 hour" } } },
     verifyEmailController,
+  );
+  app.post(
+    "/verify-email/resend",
+    { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
+    resendEmailVerificationController,
   );
 }
 

@@ -18,11 +18,19 @@ export class VerifyEmailUseCase {
     const verificationToken =
       await this.emailVerificationTokenRepository.findByTokenHash(tokenHash);
 
-    if (
-      !verificationToken ||
-      verificationToken.usedAt !== null ||
-      verificationToken.expiresAt < new Date()
-    ) {
+    if (!verificationToken) {
+      throw new InvalidOrExpiredTokenError();
+    }
+
+    // A token that already succeeded is treated as a no-op success rather
+    // than an error: email scanners (e.g. corporate antivirus) prefetch
+    // links in emails, which would otherwise burn the token before the
+    // person actually clicks it and show them a false "invalid link" error.
+    if (verificationToken.usedAt !== null) {
+      return;
+    }
+
+    if (verificationToken.expiresAt < new Date()) {
       throw new InvalidOrExpiredTokenError();
     }
 

@@ -60,15 +60,16 @@ describe("Verify Email Use Case", () => {
     expect(usedToken?.usedAt).not.toBeNull();
   });
 
-  it("should not be able to reuse a token", async () => {
+  it("should treat reusing an already-successful token as a no-op success", async () => {
     const org = await createOrg();
     await createValidToken(org.id, "raw-token");
 
     await sut.execute({ token: "raw-token" });
 
-    await expect(() => sut.execute({ token: "raw-token" })).rejects.toBeInstanceOf(
-      InvalidOrExpiredTokenError,
-    );
+    await expect(sut.execute({ token: "raw-token" })).resolves.toBeUndefined();
+
+    const updatedOrg = await orgRepository.findById(org.id);
+    expect(updatedOrg?.emailVerifiedAt).not.toBeNull();
   });
 
   it("should not be able to use an expired token", async () => {

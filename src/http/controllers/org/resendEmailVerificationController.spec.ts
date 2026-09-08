@@ -39,7 +39,7 @@ function extractTokenFromLastEmail() {
   return token;
 }
 
-describe("Verify Email Controller (e2e)", () => {
+describe("Resend Email Verification Controller (e2e)", () => {
   afterEach(() => {
     sendMock.mockClear();
   });
@@ -48,92 +48,96 @@ describe("Verify Email Controller (e2e)", () => {
     await app.close();
   });
 
-  it("should send a verification email on registration", async () => {
+  it("should be able to request a new verification email", async () => {
     await app.ready();
 
     const org = await createOrg();
+    sendMock.mockClear();
 
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs/verify-email/resend",
+      payload: { email: org.email },
+    });
+
+    expect(response.statusCode).toEqual(200);
     expect(sendMock).toHaveBeenCalledTimes(1);
     expect(sendMock.mock.calls[0][0]).toEqual(
       expect.objectContaining({ to: org.email }),
     );
   });
 
-  it("should be able to verify the email with a valid token", async () => {
-    await app.ready();
-
-    await createOrg();
-    const token = extractTokenFromLastEmail();
-
-    const response = await app.inject({
-      method: "GET",
-      url: "/orgs/verify-email",
-      query: { token },
-    });
-
-    expect(response.statusCode).toEqual(200);
-  });
-
-  it("should allow login after the email is verified", async () => {
+  it("should let an expired/lost link be replaced and still verify the account", async () => {
     await app.ready();
 
     const org = await createOrg();
+
+    const resendResponse = await app.inject({
+      method: "POST",
+      url: "/orgs/verify-email/resend",
+      payload: { email: org.email },
+    });
+    expect(resendResponse.statusCode).toEqual(200);
+
     const token = extractTokenFromLastEmail();
 
-    await app.inject({
+    const verifyResponse = await app.inject({
       method: "GET",
       url: "/orgs/verify-email",
       query: { token },
     });
+    expect(verifyResponse.statusCode).toEqual(200);
 
     const loginResponse = await app.inject({
       method: "POST",
       url: "/orgs/sessions",
       payload: { email: org.email, password: "password123" },
     });
-
     expect(loginResponse.statusCode).toEqual(200);
   });
 
-  it("should treat re-visiting an already-used verification link as a no-op success", async () => {
+  it("should not send an email when the org is already verified", async () => {
     await app.ready();
 
-    await createOrg();
+    const org = await createOrg();
     const token = extractTokenFromLastEmail();
-
     await app.inject({
       method: "GET",
       url: "/orgs/verify-email",
       query: { token },
     });
+    sendMock.mockClear();
 
     const response = await app.inject({
-      method: "GET",
-      url: "/orgs/verify-email",
-      query: { token },
+      method: "POST",
+      url: "/orgs/verify-email/resend",
+      payload: { email: org.email },
     });
 
     expect(response.statusCode).toEqual(200);
+    expect(sendMock).not.toHaveBeenCalled();
   });
 
-  it("should not be able to verify with an invalid token", async () => {
+  it("should return the same generic response for an unregistered email", async () => {
     await app.ready();
 
     const response = await app.inject({
-      method: "GET",
-      url: "/orgs/verify-email",
-      query: { token: "invalid-token" },
+      method: "POST",
+      url: "/orgs/verify-email/resend",
+      payload: { email: "unknown@email.com" },
     });
 
-    expect(response.statusCode).toEqual(400);
+    expect(response.statusCode).toEqual(200);
+    expect(sendMock).not.toHaveBeenCalled();
   });
 
-  it("should not be able to verify without a token", async () => {
+  it("should not be able to request a resend with an invalid email", async () => {
     await app.ready();
 
     const response = await app.inject({
-      method: "GET",
-      url: "/orgs/verify-email",
+      method: "POST",
+      url: "/orgs/verify-email/resend",
+      payload: { email: "not-an-email" },
     });
 
     expect(response.statusCode).toEqual(400);
