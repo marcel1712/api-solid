@@ -14,6 +14,7 @@ app.get("/", async function handler() {
 app.register(fastifyCors, {
   origin: env.FRONTEND_URL,
   credentials: true,
+  methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"],
 });
 if (env.NODE_ENV !== "test") {
   app.register(fastifyRateLimit, {

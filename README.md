@@ -181,6 +181,7 @@ Base routes are prefixed with `/orgs` and `/pets`.
 | `POST`  | `/orgs`               |      No       | Register a new org (auto-login: returns a token; sends a verification email) |
 | `POST`  | `/orgs/sessions`      |      No       | Authenticate an org (login; requires a verified email) |
 | `GET`   | `/orgs/verify-email`  |      No       | Confirm the org's email using the token from the verification email |
+| `POST`  | `/orgs/verify-email/resend` |  No     | Request a new verification email (always returns the same generic response) |
 | `POST`  | `/orgs/password/forgot` |    No       | Request a password reset email (always returns the same generic response) |
 | `POST`  | `/orgs/password/reset`  |    No       | Reset the password using a valid token from the reset email |
 | `GET`   | `/orgs/:id`           |      No       | Get an org's public details (name, address, WhatsApp) |
@@ -223,7 +224,16 @@ Base routes are prefixed with `/orgs` and `/pets`.
    email doesn't fail the registration request.
 2. `GET /orgs/verify-email?token=...` → validates the token and marks the
    org's email as verified. `POST /orgs/sessions` rejects login with
-   `403` until this step is done.
+   `403` until this step is done. Re-visiting an already-used link
+   (e.g. a corporate email scanner prefetching it before the person
+   clicks) returns `200`, not an error — the token is only rejected if
+   it was never successfully used and has expired.
+3. `POST /orgs/verify-email/resend` with `{ "email": "..." }` → sends a
+   new verification email (invalidating any previous token) if the org
+   exists and isn't verified yet. This is the recovery path for an
+   expired link — without it, a missed 24h window would permanently
+   lock the org out (can't log in, can't re-register with the same
+   email).
 
 ## Data Model
 
@@ -253,7 +263,7 @@ emailVerifiedAt DateTime?     adopted       Boolean
 
 ## Testing
 
-The project has **186 automated tests** across **33 test files**, split into:
+The project has **194 automated tests** across **35 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge
@@ -370,9 +380,11 @@ The API is deployed as a **Render** web service backed by a **Neon**
      `sameSite: "none"` (required for a cross-domain frontend) and
      suppresses verbose error logging.
    - `FRONTEND_URL` — the deployed frontend's origin. Used both to build
-     the password-reset link **and** as the allowed CORS origin, so it
-     must be the exact origin the frontend is served from (no trailing
-     slash).
+     the password-reset/verify-email links **and** as the allowed CORS
+     origin, so it must be the exact origin the frontend is served
+     from. Any trailing slash is stripped automatically (a browser's
+     `Origin` header never has one, so a mismatched trailing slash on
+     this value would silently break every cross-origin request).
    - `R2_PUBLIC_URL`, `RESEND_API_KEY`, etc. — same values as local dev,
      pointing at production resources.
    - Don't set `PORT` — Render injects it automatically and the app
@@ -383,10 +395,15 @@ The API is deployed as a **Render** web service backed by a **Neon**
 ### Notes
 
 - **CORS** (`@fastify/cors`) only allows requests from `FRONTEND_URL`,
-  with `credentials: true` so the refresh-token cookie can be sent.
-  Multiple frontend origins (e.g. a staging environment) aren't supported
-  by a single string — extend `src/app.ts` to pass an array or function
-  to `origin` if you need that.
+  with `credentials: true` so the refresh-token cookie can be sent, and
+  `methods` explicitly set to `GET, HEAD, POST, PATCH, DELETE` — the
+  plugin's own default is `GET, HEAD, POST` only, which would silently
+  block every `PATCH`/`DELETE` request from a real browser (preflight
+  would never allow them) even though `curl`/`app.inject()` never notice,
+  since neither goes through a real preflight. Multiple frontend origins
+  (e.g. a staging environment) aren't supported by a single string —
+  extend `src/app.ts` to pass an array or function to `origin` if you
+  need that.
 - Redeploying re-runs `prisma migrate deploy`, which only applies
   pending migrations — it's safe to redeploy without new migrations.
 
