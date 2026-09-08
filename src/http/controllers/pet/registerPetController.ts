@@ -18,7 +18,7 @@ export async function registerPetController(
       "Turtle",
       "Rabbit",
       "Hamster",
-      "Furret",
+      "Ferret",
       "Chinchilla",
     ]),
     bio: z.string().optional(),

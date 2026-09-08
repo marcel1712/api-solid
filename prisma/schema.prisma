@@ -63,6 +63,6 @@ enum AnimalType{
   Turtle
   Rabbit
   Hamster
-  Furret
-  Chinchilla 
+  Ferret
+  Chinchilla
 }

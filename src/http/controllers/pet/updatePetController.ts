@@ -22,7 +22,7 @@ export async function updatePetController(
       "Turtle",
       "Rabbit",
       "Hamster",
-      "Furret",
+      "Ferret",
       "Chinchilla",
     ]).optional(),
     bio: z.string().optional(),
