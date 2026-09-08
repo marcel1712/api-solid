@@ -42,7 +42,12 @@ pet can update it.
 ## Business Rules
 
 - City is required to list pets
-- An org must always have an address and a WhatsApp number
+- An org must always have an address and a WhatsApp number, stored as
+  E.164 (`+5511989731163`). The client can send a bare Brazilian local
+  number (`11989731163`), a formatted one (`(11) 98973-1163`), or one
+  already carrying the `55` country code — `POST /orgs` and
+  `PATCH /orgs/:id` normalize it to E.164 before validating/storing it.
+  A number that already starts with `+` (any country) is left as-is.
 - Every pet must be linked to an org
 - Interested adopters contact the org directly via WhatsApp (the pet's
   detail response includes the owning org's WhatsApp number)
@@ -263,7 +268,7 @@ emailVerifiedAt DateTime?     adopted       Boolean
 
 ## Testing
 
-The project has **194 automated tests** across **35 test files**, split into:
+The project has **203 automated tests** across **36 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge

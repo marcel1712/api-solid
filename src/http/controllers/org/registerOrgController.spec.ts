@@ -147,12 +147,57 @@ describe("Register Org Controller (e2e)", () => {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
         password: "password123",
-        whatsapp: "11999999999",
+        whatsapp: "not-a-phone-number",
         city: "São Carlos",
         address: "Rua das Flores, 900",
       },
     });
 
     expect(response.statusCode).toEqual(400);
+  });
+
+  it("should be able to register with a bare local whatsapp number (auto-prefixed to +55)", async () => {
+    await app.ready();
+
+    const localNumber = `1198${Math.floor(1000000 + Math.random() * 8999999)}`;
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: {
+        name: "Pet Friends",
+        email: `${randomUUID()}@email.com`,
+        password: "password123",
+        whatsapp: localNumber,
+        city: "São Carlos",
+        address: "Rua das Flores, 900",
+      },
+    });
+
+    expect(response.statusCode).toEqual(201);
+    expect(response.json().whatsapp).toEqual(`+55${localNumber}`);
+  });
+
+  it("should be able to register with a formatted local whatsapp number", async () => {
+    await app.ready();
+
+    const digits = `1198${Math.floor(1000000 + Math.random() * 8999999)}`;
+    const formatted = `(11) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: {
+        name: "Pet Friends",
+        email: `${randomUUID()}@email.com`,
+        password: "password123",
+        whatsapp: formatted,
+        city: "São Carlos",
+        address: "Rua das Flores, 900",
+      },
+    });
+
+    expect(response.statusCode).toEqual(201);
+    expect(response.json().whatsapp).toEqual(`+55${digits}`);
   });
 });

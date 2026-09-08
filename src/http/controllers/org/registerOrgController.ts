@@ -4,6 +4,7 @@ import { makeRegisterOrgUseCase } from "@/use-cases/factories/make-register-org-
 import { makeSendEmailVerificationUseCase } from "@/use-cases/factories/make-send-email-verification-use-case";
 import { generateOrgTokens } from "@/http/utils/generate-org-tokens";
 import { refreshTokenCookieOptions } from "@/http/utils/refresh-token-cookie-options";
+import { normalizeWhatsapp } from "@/utils/normalize-whatsapp";
 
 export async function registerOrgController(
   request: FastifyRequest,
@@ -13,7 +14,10 @@ export async function registerOrgController(
     name: z.string(),
     email: z.string().email(),
     password: z.string(),
-    whatsapp: z.string().e164(),
+    whatsapp: z
+      .string()
+      .transform(normalizeWhatsapp)
+      .pipe(z.string().e164()),
     city: z.string(),
     address: z.string(),
   });

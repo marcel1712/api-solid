@@ -53,6 +53,23 @@ describe("Update Org Controller (e2e)", () => {
     );
   });
 
+  it("should normalize a bare local whatsapp number to +55 E.164", async () => {
+    await app.ready();
+
+    const org = await createOrg();
+    const localNumber = `1198${Math.floor(1000000 + Math.random() * 8999999)}`;
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/orgs/${org.id}`,
+      headers: { authorization: `Bearer ${org.token}` },
+      payload: { whatsapp: localNumber },
+    });
+
+    expect(response.statusCode).toEqual(200);
+    expect(response.json().whatsapp).toEqual(`+55${localNumber}`);
+  });
+
   it("should not expose the password hash in the response", async () => {
     await app.ready();
 
