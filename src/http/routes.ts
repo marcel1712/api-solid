@@ -3,6 +3,7 @@ import { registerPetController } from "@/http/controllers/pet/registerPetControl
 import { getPetDetailsController } from "@/http/controllers/pet/getPetDetailsController";
 import { getOrgDetailsController } from "@/http/controllers/org/getOrgDetailsController";
 import { updateOrgController } from "@/http/controllers/org/updateOrgController";
+import { getOrgPetsController } from "@/http/controllers/org/getOrgPetsController";
 import { FastifyInstance } from "fastify";
 import { authenticateOrgController } from "./controllers/org/authenticateOrgController";
 import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityController";
@@ -17,6 +18,7 @@ export async function orgRoutes(app: FastifyInstance) {
   app.post("/sessions", authenticateOrgController);
   app.get("/:id", getOrgDetailsController);
   app.patch("/:id", { onRequest: [verifyJwt] }, updateOrgController);
+  app.get("/me/pets", { onRequest: [verifyJwt] }, getOrgPetsController);
 }
 
 export async function petRoutes(app: FastifyInstance) {

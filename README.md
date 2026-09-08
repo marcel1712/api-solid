@@ -146,6 +146,7 @@ Base routes are prefixed with `/orgs` and `/pets`.
 | `POST`  | `/orgs/sessions`      |      No       | Authenticate an org (login)                   |
 | `GET`   | `/orgs/:id`           |      No       | Get an org's public details (name, address, WhatsApp) |
 | `PATCH` | `/orgs/:id`           |    **Yes**    | Update the authenticated org's own information (owner only; email and password can't be changed here) |
+| `GET`   | `/orgs/me/pets`       |    **Yes**    | List the authenticated org's own pets, paginated, including adopted ones |
 | `POST`  | `/pets`               |    **Yes**    | Register a pet for the authenticated org      |
 | `GET`   | `/pets/:id`           |      No       | Get a pet's details, including the owning org's WhatsApp |
 | `PATCH` | `/pets/:id`           |    **Yes**    | Update a pet's mutable information (owner org only; adoption status can't be changed here) |
@@ -193,7 +194,7 @@ created_at    DateTime       created_at    DateTime
 
 ## Testing
 
-The project has **131 automated tests** across **22 test files**, split into:
+The project has **141 automated tests** across **24 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge

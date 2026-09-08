@@ -33,6 +33,16 @@ export class InMemoryPetRepository implements PetRepository {
     return pet;
   }
 
+  async findManyByOrgId(orgId: string, page: number): Promise<Pet[]> {
+    const PAGE_SIZE = 20;
+
+    const pets = this.items
+      .filter((pet) => pet.orgId === orgId)
+      .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+
+    return pets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  }
+
   async updateAdoptionStatus(
     id: string,
     adopted: boolean,

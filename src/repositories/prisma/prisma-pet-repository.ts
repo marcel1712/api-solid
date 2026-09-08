@@ -12,6 +12,17 @@ export class PrismaPetRepository implements PetRepository {
     return this.prisma.pet.findUnique({ where: { id } });
   }
 
+  async findManyByOrgId(orgId: string, page: number): Promise<Pet[]> {
+    const PAGE_SIZE = 20;
+
+    return this.prisma.pet.findMany({
+      where: { orgId },
+      orderBy: { created_at: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    });
+  }
+
   async findManyByOrgIds(
     orgs: Org[],
     page: number,
