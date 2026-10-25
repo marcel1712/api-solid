@@ -7,7 +7,7 @@ export const refreshTokenCookieOptions: CookieSerializeOptions =
         path: "/",
         httpOnly: true,
         secure: true,
-        sameSite: "none",
+        sameSite: "lax",
       }
     : {
         path: "/",

@@ -382,7 +382,8 @@ The API is deployed as a **Render** web service backed by a **Neon**
    Environment tab, with production values:
    - `DATABASE_URL` — the Neon connection string.
    - `NODE_ENV=production` — switches cookies to `secure: true` /
-     `sameSite: "none"` (required for a cross-domain frontend) and
+     `sameSite: "lax"` (the frontend and API must share the same site,
+     e.g. `tailhop.com.br` and `api.tailhop.com.br`) and
      suppresses verbose error logging.
    - `FRONTEND_URL` — the deployed frontend's origin. Used both to build
      the password-reset/verify-email links **and** as the allowed CORS
