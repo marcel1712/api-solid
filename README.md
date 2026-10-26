@@ -406,7 +406,13 @@ The API is deployed as a **Render** web service backed by a **Neon**
 4. Set every variable from `.env` (see [Configure environment
    variables](#2-configure-environment-variables)) in Render's
    Environment tab, with production values:
-   - `DATABASE_URL` — the Neon connection string.
+   - `DATABASE_URL` — the Neon connection string. The pooled one (host
+     ending in `-pooler`) is fine here: it's what the app uses at runtime.
+   - `DIRECT_URL` — the Neon **direct** connection string (same, without
+     `-pooler`). `prisma migrate deploy` uses it when set, because it
+     takes a Postgres advisory lock that the pooler doesn't hold
+     reliably (`P1002 … Timed out trying to acquire a postgres advisory
+     lock`). Optional locally, where `DATABASE_URL` is used instead.
    - `NODE_ENV=production` — switches cookies to `secure: true` /
      `sameSite: "lax"` (the frontend and API must share the same site,
      e.g. `tailhop.com.br` and `api.tailhop.com.br`) and
