@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+import { randomCnpj } from "@/test/random-cnpj";
 
 function randomWhatsapp() {
   return `+551199${Math.floor(1000000 + Math.random() * 8999999)}`;
@@ -26,6 +27,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -55,6 +57,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -81,6 +84,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -94,6 +98,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp: randomWhatsapp(),
         city: "Rio de Janeiro",
         address: "Rua das Palmeiras, 456",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -115,6 +120,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp,
         city: "São Carlos",
         address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -128,6 +134,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp,
         city: "Rio de Janeiro",
         address: "Rua das Palmeiras, 456",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -146,6 +153,7 @@ describe("Register Org Controller (e2e)", () => {
         password: "password123",
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -164,6 +172,7 @@ describe("Register Org Controller (e2e)", () => {
         password: "password123",
         city: "São Carlos",
         address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -183,6 +192,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp: "not-a-phone-number",
         city: "São Carlos",
         address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -204,6 +214,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp: localNumber,
         city: "São Carlos",
         address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
       },
     });
 
@@ -227,6 +238,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp: formatted,
         city: "São Carlos",
         address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
       },
     });
 

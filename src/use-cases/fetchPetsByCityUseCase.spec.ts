@@ -1,3 +1,5 @@
+import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
+import { randomCnpj } from "@/test/random-cnpj";
 import { describe, it, beforeEach, expect } from "vitest";
 import { PetRepository } from "../repositories/pet-repository";
 import { OrgRepository } from "../repositories/org-repository";
@@ -24,8 +26,12 @@ async function createOrg(overrides: Partial<Parameters<RegisterOrgUseCase["execu
     whatsapp: "11999999999",
     city: "São Paulo",
     address: "Rua das Flores, 123",
+    cnpj: randomCnpj(),
     ...overrides,
   });
+
+  // The search only shows approved orgs; these specs are about filtering.
+  await orgRepository.updateStatus(org.id, "Approved");
 
   return org;
 }
@@ -51,7 +57,7 @@ describe("Fetch Pet By City Use Case", () => {
   beforeEach(() => {
     petRepository = new InMemoryPetRepository();
     orgRepository = new InMemoryOrgRepository();
-    registerOrgUseCase = new RegisterOrgUseCase(orgRepository);
+    registerOrgUseCase = new RegisterOrgUseCase(orgRepository, new FakeCnpjLookup());
     registerPetUseCase = new RegisterPetUseCase(petRepository, orgRepository);
     petImageRepository = new InMemoryPetImageRepository();
     sut = new FetchPetByCityUseCase(petRepository, orgRepository, petImageRepository);
@@ -75,6 +81,18 @@ describe("Fetch Pet By City Use Case", () => {
     const pets = await sut.execute({ city: "São Paulo", page: 1 });
 
     expect(pets).toHaveLength(2);
+  });
+
+  it("should not return pets from orgs that weren't approved", async () => {
+    const approved = await createOrg({ city: "São Paulo" });
+    const underReview = await createOrg({ city: "São Paulo" });
+    await orgRepository.updateStatus(underReview.id, "UnderReview");
+    await createPet(approved.id, { name: "Nick" });
+    await createPet(underReview.id, { name: "Mimi" });
+
+    const pets = await sut.execute({ city: "São Paulo", page: 1 });
+
+    expect(pets.map((pet) => pet.name)).toEqual(["Nick"]);
   });
 
   it("should not return pets from orgs in a different city", async () => {

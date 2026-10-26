@@ -5,6 +5,8 @@ import { Mailer } from "@/lib/mailer";
 import { SendEmailVerificationUseCase } from "./sendEmailVerificationUseCase";
 
 class FakeMailer implements Mailer {
+  async sendOrgApprovedEmail() {}
+  async sendOrgRejectedEmail() {}
   public sentVerificationEmails: { to: string; verifyUrl: string }[] = [];
 
   async sendPasswordResetEmail(): Promise<void> {}

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+import { randomCnpj } from "@/test/random-cnpj";
 import { prisma } from "@/lib/prisma";
 
 function randomWhatsapp() {
@@ -22,6 +23,7 @@ async function createOrg(options: { verified?: boolean } = {}) {
       whatsapp: randomWhatsapp(),
       city: "São Carlos",
       address: "Rua das Flores, 900",
+      cnpj: randomCnpj(),
     },
   });
 

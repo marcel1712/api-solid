@@ -8,6 +8,7 @@ import { LimitExceededError } from "@/use-cases/errors/limit-exceeded-error";
 import { InvalidOrExpiredTokenError } from "@/use-cases/errors/invalid-or-expired-token-error";
 import { EmailNotVerifiedError } from "@/use-cases/errors/email-not-verified-error";
 import { InvalidSessionError } from "@/use-cases/errors/invalid-session-error";
+import { CnpjNotFoundError } from "@/use-cases/errors/cnpj-not-found-error";
 
 export function errorHandler(
   error: FastifyError,
@@ -43,6 +44,14 @@ export function errorHandler(
 
   if (error instanceof InvalidOrExpiredTokenError) {
     return reply.status(400).send({ message: error.message });
+  }
+
+  // Well-formed but unknown to the Receita: not a validation slip the form
+  // can point at, so it gets its own code for the client to explain.
+  if (error instanceof CnpjNotFoundError) {
+    return reply
+      .status(422)
+      .send({ message: error.message, code: "CNPJ_NOT_FOUND" });
   }
 
   if (error instanceof InvalidSessionError) {

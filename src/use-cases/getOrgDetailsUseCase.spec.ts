@@ -3,12 +3,14 @@ import { OrgRepository } from "@/repositories/org-repository";
 import { InMemoryOrgRepository } from "@/repositories/in-memory/in-memory-org-repository";
 import { GetOrgDetailsUseCase } from "./getOrgDetailsUseCase";
 import { ResourceNotFoundError } from "./errors/resource-not-found-error";
+import { OrgStatus } from "@prisma/client";
 
 let orgRepository: OrgRepository;
 let sut: GetOrgDetailsUseCase;
 
-async function createOrg() {
+async function createOrg(status: OrgStatus = "Approved") {
   return orgRepository.create({
+    status,
     name: "Pet Friends",
     email: "petfriends@email.com",
     password_hash: "hashed-password",
@@ -32,6 +34,16 @@ describe("Get Org Details Use Case", () => {
     expect(org.id).toEqual(createdOrg.id);
     expect(org.name).toEqual("Pet Friends");
     expect(org.whatsapp).toEqual("+5511999999999");
+  });
+
+  it("should not show an org that wasn't approved", async () => {
+    for (const status of ["Pending", "UnderReview", "Rejected"] as const) {
+      const org = await createOrg(status);
+
+      await expect(() =>
+        sut.execute({ orgId: org.id }),
+      ).rejects.toBeInstanceOf(ResourceNotFoundError);
+    }
   });
 
   it("should not be able to get details of a non-existing org", async () => {

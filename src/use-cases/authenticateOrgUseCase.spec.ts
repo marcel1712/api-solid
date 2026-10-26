@@ -1,3 +1,5 @@
+import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
+import { randomCnpj } from "@/test/random-cnpj";
 import { OrgRepository } from "@/repositories/org-repository";
 import { describe, it, expect, beforeEach } from "vitest";
 import { AuthenticateOrgUseCase } from "../use-cases/authenticateOrgUseCase";
@@ -12,7 +14,7 @@ let sut: AuthenticateOrgUseCase;
 describe("Authenticate Org Use Case", () => {
   beforeEach(() => {
     orgRepository = new InMemoryOrgRepository();
-    registerUseCase = new RegisterOrgUseCase(orgRepository);
+    registerUseCase = new RegisterOrgUseCase(orgRepository, new FakeCnpjLookup());
     sut = new AuthenticateOrgUseCase(orgRepository);
   });
 
@@ -24,6 +26,7 @@ describe("Authenticate Org Use Case", () => {
       whatsapp: "11999999999",
       city: "São Paulo",
       address: "Rua das Flores, 123",
+      cnpj: randomCnpj(),
     });
     await orgRepository.markEmailAsVerified(org.id);
 
@@ -43,6 +46,7 @@ describe("Authenticate Org Use Case", () => {
       whatsapp: "11999999999",
       city: "São Paulo",
       address: "Rua das Flores, 123",
+      cnpj: randomCnpj(),
     });
 
     await expect(() =>
@@ -70,6 +74,7 @@ describe("Authenticate Org Use Case", () => {
       whatsapp: "11999999999",
       city: "São Paulo",
       address: "Rua das Flores, 123",
+      cnpj: randomCnpj(),
     });
 
     await expect(() =>
@@ -88,6 +93,7 @@ describe("Authenticate Org Use Case", () => {
       whatsapp: "11999999999",
       city: "São Paulo",
       address: "Rua das Flores, 123",
+      cnpj: randomCnpj(),
     });
     await orgRepository.markEmailAsVerified(org.id);
 

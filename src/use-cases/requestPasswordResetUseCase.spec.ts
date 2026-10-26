@@ -7,6 +7,8 @@ import { Mailer } from "@/lib/mailer";
 import { RequestPasswordResetUseCase } from "./requestPasswordResetUseCase";
 
 class FakeMailer implements Mailer {
+  async sendOrgApprovedEmail() {}
+  async sendOrgRejectedEmail() {}
   public sentEmails: { to: string; resetUrl: string }[] = [];
 
   async sendPasswordResetEmail(params: {

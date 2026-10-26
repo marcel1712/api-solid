@@ -1,3 +1,5 @@
+import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
+import { randomCnpj } from "@/test/random-cnpj";
 import { PetRepository } from "../repositories/pet-repository";
 import { describe, it, beforeEach, expect } from "vitest";
 import { RegisterPetUseCase } from "./registerPet";
@@ -20,6 +22,7 @@ async function createOrg() {
     whatsapp: "11999999999",
     city: "São Paulo",
     address: "Rua das Flores, 123",
+    cnpj: randomCnpj(),
   });
 
   return org;
@@ -29,7 +32,7 @@ describe("Register Pet Use Case", () => {
   beforeEach(() => {
     petRepository = new InMemoryPetRepository();
     orgRepository = new InMemoryOrgRepository();
-    registerOrgUseCase = new RegisterOrgUseCase(orgRepository);
+    registerOrgUseCase = new RegisterOrgUseCase(orgRepository, new FakeCnpjLookup());
     sut = new RegisterPetUseCase(petRepository, orgRepository);
   });
 

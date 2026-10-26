@@ -3,6 +3,8 @@ import { z } from "zod";
 import { makeRegisterOrgUseCase } from "@/use-cases/factories/make-register-org-use-case";
 import { makeSendEmailVerificationUseCase } from "@/use-cases/factories/make-send-email-verification-use-case";
 import { normalizeWhatsapp } from "@/utils/normalize-whatsapp";
+import { isValidCnpj, normalizeCnpj } from "@/utils/cnpj";
+import { toOwnOrg } from "@/http/utils/org-views";
 
 export async function registerOrgController(
   request: FastifyRequest,
@@ -18,9 +20,13 @@ export async function registerOrgController(
       .pipe(z.string().e164()),
     city: z.string(),
     address: z.string(),
+    cnpj: z
+      .string()
+      .transform(normalizeCnpj)
+      .refine(isValidCnpj, "Invalid CNPJ"),
   });
 
-  const { name, email, password, whatsapp, city, address } =
+  const { name, email, password, whatsapp, city, address, cnpj } =
     createOrgBodyScheme.parse(request.body);
 
   const registerOrgUseCase = makeRegisterOrgUseCase();
@@ -32,6 +38,7 @@ export async function registerOrgController(
     whatsapp,
     city,
     address,
+    cnpj,
   });
 
   try {
@@ -46,9 +53,7 @@ export async function registerOrgController(
     request.log.error(error, "Failed to send the verification email");
   }
 
-  const { password_hash: _password_hash, ...publicOrg } = org;
-
   // No session here: the org can't sign in until it verifies its email, and
   // handing out a token at signup would let it skip that check entirely.
-  return reply.status(201).send(publicOrg);
+  return reply.status(201).send(toOwnOrg(org));
 }

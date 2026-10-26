@@ -29,7 +29,8 @@ export async function getPetDetailsController(
 
     const getPetUseCase = makeGetPetUseCase();
     const { pet, whatsapp, images } = await getPetUseCase.execute({
-        petId: id
+        petId: id,
+        viewerOrgId: request.orgId,
     })
 
     const petDetails: GetPetDetailsResponse = { ...pet, whatsapp, images };

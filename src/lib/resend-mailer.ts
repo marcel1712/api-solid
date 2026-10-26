@@ -2,6 +2,8 @@ import { Resend } from "resend";
 import { Mailer } from "@/lib/mailer";
 import {
   EmailContent,
+  orgApprovedEmail,
+  orgRejectedEmail,
   passwordResetEmail,
   verificationEmail,
 } from "@/lib/email-templates";
@@ -43,5 +45,31 @@ export class ResendMailer implements Mailer {
     verifyUrl: string;
   }): Promise<void> {
     await this.send(to, verificationEmail(verifyUrl));
+  }
+
+  async sendOrgApprovedEmail({
+    to,
+    orgName,
+    dashboardUrl,
+  }: {
+    to: string;
+    orgName: string;
+    dashboardUrl: string;
+  }): Promise<void> {
+    await this.send(to, orgApprovedEmail(orgName, dashboardUrl));
+  }
+
+  async sendOrgRejectedEmail({
+    to,
+    orgName,
+    reason,
+    dashboardUrl,
+  }: {
+    to: string;
+    orgName: string;
+    reason: string;
+    dashboardUrl: string;
+  }): Promise<void> {
+    await this.send(to, orgRejectedEmail(orgName, reason, dashboardUrl));
   }
 }

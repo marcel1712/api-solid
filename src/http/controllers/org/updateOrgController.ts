@@ -1,3 +1,4 @@
+import { toOwnOrg } from "@/http/utils/org-views";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { makeUpdateOrgUseCase } from "@/use-cases/factories/make-update-org-use-case";
@@ -39,7 +40,5 @@ export async function updateOrgController(
     address,
   });
 
-  const { password_hash: _password_hash, ...orgResponse } = org;
-
-  return reply.status(200).send(orgResponse);
+  return reply.status(200).send(toOwnOrg(org));
 }

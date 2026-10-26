@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+import { randomCnpj } from "@/test/random-cnpj";
+import { prisma } from "@/lib/prisma";
 
 function randomWhatsapp() {
   return `+551199${Math.floor(1000000 + Math.random() * 8999999)}`;
 }
 
-async function createOrg() {
+async function createOrg({ approved = true } = {}) {
   const response = await app.inject({
     method: "POST",
     url: "/orgs",
@@ -17,10 +19,18 @@ async function createOrg() {
       whatsapp: randomWhatsapp(),
       city: "São Carlos",
       address: "Rua das Flores, 900",
+      cnpj: randomCnpj(),
     },
   });
 
-  return response.json();
+  const org = response.json();
+  if (approved) {
+    await prisma.org.update({
+      where: { id: org.id },
+      data: { status: "Approved" },
+    });
+  }
+  return org;
 }
 
 describe("Get Org Details Controller (e2e)", () => {
@@ -50,7 +60,7 @@ describe("Get Org Details Controller (e2e)", () => {
     );
   });
 
-  it("should not expose the org's password hash", async () => {
+  it("should only expose the public profile", async () => {
     await app.ready();
 
     const org = await createOrg();
@@ -60,7 +70,22 @@ describe("Get Org Details Controller (e2e)", () => {
       url: `/orgs/${org.id}`,
     });
 
-    expect(response.json()).not.toHaveProperty("password_hash");
+    for (const field of ["password_hash", "email", "cnpj", "cnpjCheck", "status"]) {
+      expect(response.json()).not.toHaveProperty(field);
+    }
+  });
+
+  it("should not show an org that wasn't approved", async () => {
+    await app.ready();
+
+    const org = await createOrg({ approved: false });
+
+    const response = await app.inject({
+      method: "GET",
+      url: `/orgs/${org.id}`,
+    });
+
+    expect(response.statusCode).toEqual(404);
   });
 
   it("should not require authentication to get org details", async () => {

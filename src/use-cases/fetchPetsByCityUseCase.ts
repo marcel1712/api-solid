@@ -26,7 +26,7 @@ export class FetchPetByCityUseCase {
       throw new Error("City is required");
     }
 
-    const orgs = await this.orgRepository.findManyByCity(request.city);
+    const orgs = await this.orgRepository.findManyApprovedByCity(request.city);
 
     const pets = await this.petRepository.findManyByOrgIds(orgs, request.page, {
       ageMin: request.ageMin,

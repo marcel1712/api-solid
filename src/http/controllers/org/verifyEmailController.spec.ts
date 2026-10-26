@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import app from "@/app";
+import { randomCnpj } from "@/test/random-cnpj";
 
 const { sendMock } = vi.hoisted(() => ({
   sendMock: vi.fn().mockResolvedValue({ data: { id: "email-id" }, error: null }),
@@ -27,6 +28,7 @@ async function createOrg() {
       whatsapp: randomWhatsapp(),
       city: "São Carlos",
       address: "Rua das Flores, 900",
+      cnpj: randomCnpj(),
     },
   });
 

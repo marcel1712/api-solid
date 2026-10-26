@@ -1,5 +1,5 @@
 import Fastify, { FastifyRequest } from "fastify";
-import { orgRoutes, petRoutes } from "@/http/routes";
+import { adminRoutes, orgRoutes, petRoutes } from "@/http/routes";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
@@ -56,6 +56,7 @@ if (env.NODE_ENV !== "test") {
 app.register(fastifyCookie);
 app.register(orgRoutes, { prefix: "orgs" });
 app.register(petRoutes, { prefix: "pets" });
+app.register(adminRoutes, { prefix: "admin" });
 
 app.setErrorHandler(errorHandler);
 

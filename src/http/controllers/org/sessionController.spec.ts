@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+import { randomCnpj } from "@/test/random-cnpj";
 import { signInRegisteredOrg } from "@/test/sign-in-registered-org";
 
 async function signIn() {
@@ -14,6 +15,7 @@ async function signIn() {
       whatsapp: `+551199${Math.floor(1000000 + Math.random() * 8999999)}`,
       city: "São Carlos",
       address: "Rua das Flores, 900",
+      cnpj: randomCnpj(),
     },
   });
   const org = response.json();

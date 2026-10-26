@@ -1,5 +1,7 @@
 import { OrgRepository, UpdateOrgData } from "@/repositories/org-repository";
-import { Org, Prisma } from "@prisma/client";
+import { Org, OrgStatus, Prisma } from "@prisma/client";
+import { OrgReview } from "@/repositories/org-repository";
+import { CnpjCheck } from "@/utils/cnpj-check";
 import { randomUUID } from "node:crypto";
 
 export class InMemoryOrgRepository implements OrgRepository {
@@ -25,10 +27,33 @@ export class InMemoryOrgRepository implements OrgRepository {
     }
   }
 
-  async findManyByCity(city: string): Promise<Org[]> {
-    const orgs = this.items.filter((org) => org.city === city);
+  async findManyApprovedByCity(city: string): Promise<Org[]> {
+    return this.items.filter(
+      (org) => org.city === city && org.status === OrgStatus.Approved,
+    );
+  }
 
-    return orgs;
+  async findManyByStatus(status: OrgStatus): Promise<Org[]> {
+    return this.items.filter((org) => org.status === status);
+  }
+
+  async findByCnpj(cnpj: string): Promise<Org | null> {
+    return this.items.find((org) => org.cnpj === cnpj) ?? null;
+  }
+
+  async updateStatus(id: string, status: OrgStatus): Promise<void> {
+    const org = await this.findById(id);
+    if (org) org.status = status;
+  }
+
+  async saveReview(id: string, review: OrgReview): Promise<void> {
+    const org = await this.findById(id);
+    if (org) Object.assign(org, review);
+  }
+
+  async saveCnpjCheck(id: string, check: CnpjCheck): Promise<void> {
+    const org = await this.findById(id);
+    if (org) org.cnpjCheck = check as unknown as Prisma.JsonValue;
   }
 
   async update(id: string, data: UpdateOrgData): Promise<Org | null> {
@@ -64,7 +89,7 @@ export class InMemoryOrgRepository implements OrgRepository {
   }
 
   async create(data: Prisma.OrgCreateInput) {
-    const org = {
+    const org: Org = {
       id: randomUUID(),
       name: data.name,
       email: data.email,
@@ -74,6 +99,11 @@ export class InMemoryOrgRepository implements OrgRepository {
       address: data.address,
       created_at: new Date(),
       emailVerifiedAt: null,
+      cnpj: data.cnpj ?? null,
+      status: data.status ?? OrgStatus.Pending,
+      cnpjCheck: (data.cnpjCheck as Prisma.JsonValue | undefined) ?? null,
+      rejectionReason: null,
+      reviewedAt: null,
     };
 
     this.items.push(org);

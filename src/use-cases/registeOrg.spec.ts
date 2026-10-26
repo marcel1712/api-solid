@@ -1,3 +1,5 @@
+import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
+import { randomCnpj } from "@/test/random-cnpj";
 import { OrgRepository } from "../repositories/org-repository";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
 import { RegisterOrgUseCase } from "./registerOrg";
@@ -9,7 +11,7 @@ let sut: RegisterOrgUseCase;
 describe("Register Org Use Case", () => {
   beforeEach(() => {
     orgRepository = new InMemoryOrgRepository();
-    sut = new RegisterOrgUseCase(orgRepository);
+    sut = new RegisterOrgUseCase(orgRepository, new FakeCnpjLookup());
   });
 
   it("should be able to register a new org", async () => {
@@ -20,6 +22,7 @@ describe("Register Org Use Case", () => {
       whatsapp: "11999999999",
       city: "São Paulo",
       address: "Rua das Flores, 123",
+      cnpj: randomCnpj(),
     });
 
     expect(org.id).toEqual(expect.any(String));
@@ -33,6 +36,7 @@ describe("Register Org Use Case", () => {
       whatsapp: "11999999999",
       city: "São Paulo",
       address: "Rua das Flores, 123",
+      cnpj: randomCnpj(),
     });
 
     expect(org.password_hash).not.toEqual("password123");
@@ -47,6 +51,7 @@ describe("Register Org Use Case", () => {
       whatsapp: "11999999999",
       city: "São Paulo",
       address: "Rua das Flores, 123",
+      cnpj: randomCnpj(),
     });
 
     await expect(() =>
@@ -57,6 +62,7 @@ describe("Register Org Use Case", () => {
         whatsapp: "11888888888",
         city: "Rio de Janeiro",
         address: "Rua das Palmeiras, 456",
+        cnpj: randomCnpj(),
       }),
     ).rejects.toThrow();
   });
@@ -69,6 +75,7 @@ describe("Register Org Use Case", () => {
       whatsapp: "11999999999",
       city: "São Paulo",
       address: "Rua das Flores, 123",
+      cnpj: randomCnpj(),
     });
 
     expect(org.id).toMatch(

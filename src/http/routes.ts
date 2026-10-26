@@ -19,6 +19,14 @@ import { requestPetImageUploadController } from "./controllers/pet/requestPetIma
 import { confirmPetImageUploadController } from "./controllers/pet/confirmPetImageUploadController";
 import { deletePetImageController } from "./controllers/pet/deletePetImageController";
 import { verifyJwt } from "./middlewares/verify-jwt";
+import { readOptionalJwt } from "./middlewares/read-optional-jwt";
+import { verifyAdmin } from "./middlewares/verify-admin";
+import { getOwnOrgController } from "./controllers/org/getOwnOrgController";
+import { requestOrgDocumentUploadController } from "./controllers/org/requestOrgDocumentUploadController";
+import { confirmOrgDocumentUploadController } from "./controllers/org/confirmOrgDocumentUploadController";
+import { listOrgsForReviewController } from "./controllers/admin/listOrgsForReviewController";
+import { reviewOrgController } from "./controllers/admin/reviewOrgController";
+import { recheckOrgCnpjController } from "./controllers/admin/recheckOrgCnpjController";
 
 export async function orgRoutes(app: FastifyInstance) {
   app.post(
@@ -39,7 +47,21 @@ export async function orgRoutes(app: FastifyInstance) {
   app.delete("/sessions", signOutController);
   app.get("/:id", getOrgDetailsController);
   app.patch("/:id", { onRequest: [verifyJwt] }, updateOrgController);
+  app.get("/me", { onRequest: [verifyJwt] }, getOwnOrgController);
   app.get("/me/pets", { onRequest: [verifyJwt] }, getOrgPetsController);
+  app.post(
+    "/me/documents",
+    {
+      onRequest: [verifyJwt],
+      config: { rateLimit: { max: 20, timeWindow: "1 hour" } },
+    },
+    requestOrgDocumentUploadController,
+  );
+  app.post(
+    "/me/documents/confirm",
+    { onRequest: [verifyJwt] },
+    confirmOrgDocumentUploadController,
+  );
   app.post(
     "/password/forgot",
     { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
@@ -64,7 +86,7 @@ export async function orgRoutes(app: FastifyInstance) {
 
 export async function petRoutes(app: FastifyInstance) {
   app.post("/", { onRequest: [verifyJwt] }, registerPetController);
-  app.get("/:id", getPetDetailsController);
+  app.get("/:id", { onRequest: [readOptionalJwt] }, getPetDetailsController);
   app.get("/search", fetchPetByCityController);
   app.patch("/:id", { onRequest: [verifyJwt] }, updatePetController);
   app.patch("/:id/adopt", { onRequest: [verifyJwt] }, markPetAsAdoptedController);
@@ -83,4 +105,12 @@ export async function petRoutes(app: FastifyInstance) {
     { onRequest: [verifyJwt] },
     deletePetImageController,
   );
+}
+export async function adminRoutes(app: FastifyInstance) {
+  app.addHook("onRequest", verifyJwt);
+  app.addHook("onRequest", verifyAdmin);
+
+  app.get("/orgs", listOrgsForReviewController);
+  app.post("/orgs/:id/review", reviewOrgController);
+  app.post("/orgs/:id/cnpj-check", recheckOrgCnpjController);
 }

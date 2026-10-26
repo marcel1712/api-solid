@@ -1,6 +1,11 @@
-import { Org, Prisma } from "@prisma/client";
+import { Org, OrgStatus, Prisma } from "@prisma/client";
 import { OrgCreateInput } from "../../../generated/prisma/models";
-import { OrgRepository, UpdateOrgData } from "@/repositories/org-repository";
+import {
+  OrgRepository,
+  OrgReview,
+  UpdateOrgData,
+} from "@/repositories/org-repository";
+import { CnpjCheck } from "@/utils/cnpj-check";
 import { PrismaClient } from "@/../generated/prisma/client";
 import { ResourceAlreadyExistsError } from "@/use-cases/errors/resource-already-exists-error";
 
@@ -23,7 +28,7 @@ export class PrismaOrgRepository implements OrgRepository {
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new ResourceAlreadyExistsError(
-          "This email or WhatsApp is already registered",
+          "This email, WhatsApp or CNPJ is already registered",
         );
       }
       throw error;
@@ -46,11 +51,38 @@ export class PrismaOrgRepository implements OrgRepository {
     });
   }
 
-  async findManyByCity(city: string): Promise<Org[]> {
+  async findManyApprovedByCity(city: string): Promise<Org[]> {
     return this.prisma.org.findMany({
       where: {
         city,
+        status: OrgStatus.Approved,
       },
+    });
+  }
+
+  async findManyByStatus(status: OrgStatus): Promise<Org[]> {
+    return this.prisma.org.findMany({
+      where: { status },
+      orderBy: { created_at: "asc" },
+    });
+  }
+
+  async findByCnpj(cnpj: string): Promise<Org | null> {
+    return this.prisma.org.findUnique({ where: { cnpj } });
+  }
+
+  async updateStatus(id: string, status: OrgStatus): Promise<void> {
+    await this.prisma.org.update({ where: { id }, data: { status } });
+  }
+
+  async saveReview(id: string, review: OrgReview): Promise<void> {
+    await this.prisma.org.update({ where: { id }, data: review });
+  }
+
+  async saveCnpjCheck(id: string, check: CnpjCheck): Promise<void> {
+    await this.prisma.org.update({
+      where: { id },
+      data: { cnpjCheck: check as unknown as Prisma.InputJsonValue },
     });
   }
 

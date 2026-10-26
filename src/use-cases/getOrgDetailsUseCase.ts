@@ -1,5 +1,5 @@
 import { OrgRepository } from "@/repositories/org-repository";
-import { Org } from "@prisma/client";
+import { Org, OrgStatus } from "@prisma/client";
 import { ResourceNotFoundError } from "@/use-cases/errors/resource-not-found-error";
 
 interface GetOrgDetailsRequest {
@@ -12,7 +12,8 @@ export class GetOrgDetailsUseCase {
 
     async execute(request: GetOrgDetailsRequest): Promise<Org> {
         const org = await this.orgRepository.findById(request.orgId);
-        if(!org){
+        // Public profile: only orgs that passed review have one.
+        if(!org || org.status !== OrgStatus.Approved){
             throw new ResourceNotFoundError();
         }
         return org;

@@ -17,12 +17,28 @@ const envSchema = z.object({
   R2_ACCESS_KEY_ID: z.string().min(1, "R2_ACCESS_KEY_ID is required"),
   R2_SECRET_ACCESS_KEY: z.string().min(1, "R2_SECRET_ACCESS_KEY is required"),
   R2_BUCKET_NAME: z.string().min(1, "R2_BUCKET_NAME is required"),
+  // Private bucket for org registration documents: no public access, read
+  // only through short-lived signed URLs from the admin panel.
+  R2_DOCUMENTS_BUCKET_NAME: z
+    .string()
+    .min(1, "R2_DOCUMENTS_BUCKET_NAME is required"),
   R2_PUBLIC_URL: z
     .string()
     .url()
     .transform((url) => url.replace(/\/+$/, "")),
   RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
   MAIL_FROM: z.string().min(1, "MAIL_FROM is required"),
+  // Comma-separated. Accounts signed in with one of these emails can review
+  // orgs; empty means nobody can.
+  ADMIN_EMAILS: z
+    .string()
+    .default("")
+    .transform((value) =>
+      value
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean),
+    ),
   FRONTEND_URL: z
     .string()
     .url()

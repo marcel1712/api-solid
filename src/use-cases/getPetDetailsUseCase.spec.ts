@@ -23,6 +23,11 @@ async function createOrg() {
     city: "São Paulo",
     address: "Rua das Flores, 123",
     created_at: new Date(),
+    cnpj: "11222333000181",
+    status: "Approved",
+    cnpjCheck: null,
+    rejectionReason: null,
+    reviewedAt: null,
     emailVerifiedAt: new Date(),
   });
 }
@@ -72,6 +77,24 @@ describe("Get Pet Details Use Case", () => {
       }),
     );
     expect(whatsapp).toEqual("+5511999999999");
+  });
+
+  it("should hide a pet from an org that wasn't approved, except from that org", async () => {
+    const createdPet = await createPet();
+    await orgRepository.updateStatus("org-01", "UnderReview");
+
+    await expect(() =>
+      sut.execute({ petId: createdPet.id }),
+    ).rejects.toBeInstanceOf(ResourceNotFoundError);
+    await expect(() =>
+      sut.execute({ petId: createdPet.id, viewerOrgId: "another-org" }),
+    ).rejects.toBeInstanceOf(ResourceNotFoundError);
+
+    const { pet } = await sut.execute({
+      petId: createdPet.id,
+      viewerOrgId: "org-01",
+    });
+    expect(pet.id).toEqual(createdPet.id);
   });
 
   it("should not be able to get details of a non-existing pet", async () => {

@@ -8,6 +8,8 @@ import { SendEmailVerificationUseCase } from "./sendEmailVerificationUseCase";
 import { ResendEmailVerificationUseCase } from "./resendEmailVerificationUseCase";
 
 class FakeMailer implements Mailer {
+  async sendOrgApprovedEmail() {}
+  async sendOrgRejectedEmail() {}
   public sentVerificationEmails: { to: string; verifyUrl: string }[] = [];
 
   async sendPasswordResetEmail(): Promise<void> {}

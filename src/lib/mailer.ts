@@ -7,4 +7,15 @@ export interface Mailer {
     to: string;
     verifyUrl: string;
   }): Promise<void>;
+  sendOrgApprovedEmail(params: {
+    to: string;
+    orgName: string;
+    dashboardUrl: string;
+  }): Promise<void>;
+  sendOrgRejectedEmail(params: {
+    to: string;
+    orgName: string;
+    reason: string;
+    dashboardUrl: string;
+  }): Promise<void>;
 }

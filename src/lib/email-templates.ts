@@ -38,10 +38,13 @@ interface LayoutOptions {
   /** Shown by the inbox next to the subject, hidden in the body. */
   preheader: string;
   title: string;
+  /** Plain text: escaped here, so it's safe to pass an org's name. */
   paragraphs: string[];
+  /** A quoted box under the text, e.g. the reason an org was turned down. */
+  highlight?: string;
   action: { label: string; url: string };
-  expiry: string;
-  ignoreNote: string;
+  expiry?: string;
+  ignoreNote?: string;
 }
 
 // Table-based on purpose: Outlook still renders with Word's engine, which
@@ -57,9 +60,17 @@ function layout(options: LayoutOptions): string {
   const paragraphs = options.paragraphs
     .map(
       (paragraph) =>
-        `<p style="margin:0 0 16px;font-family:${font.body};font-size:16px;line-height:26px;font-weight:600;color:${color.inkSoft};">${paragraph}</p>`,
+        `<p style="margin:0 0 16px;font-family:${font.body};font-size:16px;line-height:26px;font-weight:600;color:${color.inkSoft};">${escapeHtml(paragraph)}</p>`,
     )
     .join("");
+
+  const highlight = options.highlight
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 8px;">
+              <tr>
+                <td style="background-color:${color.canvas};border-left:4px solid ${color.brand};border-radius:12px;padding:16px 20px;font-family:${font.body};font-size:15px;line-height:24px;font-weight:600;color:${color.ink};white-space:pre-line;">${escapeHtml(options.highlight)}</td>
+              </tr>
+            </table>`
+    : "";
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -103,6 +114,7 @@ function layout(options: LayoutOptions): string {
           <td style="background-color:${color.surface};border-radius:0 0 24px 24px;padding:36px 32px;">
             <h1 style="margin:0 0 20px;font-family:${font.display};font-size:28px;line-height:34px;font-weight:600;letter-spacing:-0.5px;color:${color.ink};">${escapeHtml(options.title)}</h1>
             ${paragraphs}
+            ${highlight}
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 20px;">
               <tr>
                 <td style="background-color:${color.teal};border-radius:999px;">
@@ -110,13 +122,13 @@ function layout(options: LayoutOptions): string {
                 </td>
               </tr>
             </table>
-            <p style="margin:0 0 28px;font-family:${font.body};font-size:14px;line-height:22px;font-weight:600;color:${color.inkSoft};">${escapeHtml(options.expiry)}</p>
+            ${options.expiry ? `<p style="margin:0 0 28px;font-family:${font.body};font-size:14px;line-height:22px;font-weight:600;color:${color.inkSoft};">${escapeHtml(options.expiry)}</p>` : `<div style="height:8px;line-height:8px;font-size:0;">&nbsp;</div>`}
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr><td style="border-top:2px solid ${color.hairline};font-size:0;line-height:0;">&nbsp;</td></tr>
             </table>
             <p style="margin:24px 0 8px;font-family:${font.body};font-size:13px;line-height:20px;font-weight:600;color:${color.inkSoft};">Se o botão não funcionar, copie e cole este endereço no navegador:</p>
             <p style="margin:0 0 20px;font-family:${font.body};font-size:13px;line-height:20px;font-weight:600;word-break:break-all;"><a href="${url}" target="_blank" style="color:${color.brand};text-decoration:underline;">${url}</a></p>
-            <p style="margin:0;font-family:${font.body};font-size:13px;line-height:20px;font-weight:600;color:${color.inkSoft};">${escapeHtml(options.ignoreNote)}</p>
+            ${options.ignoreNote ? `<p style="margin:0;font-family:${font.body};font-size:13px;line-height:20px;font-weight:600;color:${color.inkSoft};">${escapeHtml(options.ignoreNote)}</p>` : ""}
           </td>
         </tr>
         <tr>
@@ -187,6 +199,69 @@ export function passwordResetEmail(resetUrl: string): EmailContent {
       "O link vale por 1 hora e só pode ser usado uma vez.",
       "",
       "Não pediu para trocar a senha? Pode ignorar este e-mail. Sua senha atual continua valendo.",
+      "",
+      "Tailhop · Conectando pets a famílias",
+    ].join("\n"),
+  };
+}
+
+export function orgApprovedEmail(
+  orgName: string,
+  dashboardUrl: string,
+): EmailContent {
+  const intro = `A conta “${orgName}” foi aprovada. Os pets que vocês já cadastraram estão visíveis para quem procura adotar, e os próximos entram no ar assim que forem publicados.`;
+
+  return {
+    subject: "Sua ONG foi aprovada no Tailhop",
+    html: layout({
+      preheader: "Seus pets já aparecem para quem procura adotar.",
+      title: "Tudo certo, sua ONG foi aprovada!",
+      paragraphs: [intro, "Obrigado por cuidar de quem ainda espera um lar."],
+      action: { label: "Abrir meu painel", url: dashboardUrl },
+    }),
+    text: [
+      "Tudo certo, sua ONG foi aprovada!",
+      "",
+      intro,
+      "",
+      "Obrigado por cuidar de quem ainda espera um lar.",
+      "",
+      `Abrir meu painel: ${dashboardUrl}`,
+      "",
+      "Tailhop · Conectando pets a famílias",
+    ].join("\n"),
+  };
+}
+
+export function orgRejectedEmail(
+  orgName: string,
+  reason: string,
+  dashboardUrl: string,
+): EmailContent {
+  const intro = `Analisamos o cadastro “${orgName}” e, por enquanto, não conseguimos aprovar a conta. Este foi o motivo:`;
+  const next =
+    "Os documentos enviados foram apagados. Se for possível corrigir, envie os documentos de novo pelo painel e a conta volta para análise.";
+
+  return {
+    subject: "Sobre o cadastro da sua ONG no Tailhop",
+    html: layout({
+      preheader: "Veja o que faltou e como enviar de novo.",
+      title: "Ainda não foi desta vez",
+      paragraphs: [intro],
+      highlight: reason,
+      action: { label: "Enviar documentos de novo", url: dashboardUrl },
+      ignoreNote: next,
+    }),
+    text: [
+      "Ainda não foi desta vez",
+      "",
+      intro,
+      "",
+      reason,
+      "",
+      next,
+      "",
+      `Enviar documentos de novo: ${dashboardUrl}`,
       "",
       "Tailhop · Conectando pets a famílias",
     ].join("\n"),

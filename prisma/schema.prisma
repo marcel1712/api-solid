@@ -23,11 +23,19 @@ model Org{
   address String
   created_at DateTime @default(now())
   emailVerifiedAt DateTime?
+  // Nullable only for accounts created before verification existed.
+  cnpj String? @unique
+  status OrgStatus @default(Pending)
+  // Snapshot of the BrasilAPI lookup taken at signup, for the reviewer.
+  cnpjCheck Json?
+  rejectionReason String?
+  reviewedAt DateTime?
+  documents OrgDocument[]
   pets Pet[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
   sessions Session[]
-  @@index([city])
+  @@index([city, status])
 }
 
 model PasswordResetToken{
@@ -62,6 +70,18 @@ model Session{
   @@index([orgId])
 }
 
+// Kept only until the review decision: approving or rejecting an org deletes
+// its files and these rows, so no registration paperwork outlives its use.
+model OrgDocument{
+  id String @id @default(uuid())
+  org Org @relation(fields: [orgId], references: [id])
+  orgId String
+  kind OrgDocumentKind
+  key String
+  created_at DateTime @default(now())
+  @@unique([orgId, kind])
+}
+
 model Pet{
   id String @id @default(uuid())
   name String
@@ -83,6 +103,18 @@ model PetImage{
   key String
   url String
   created_at DateTime @default(now())
+}
+
+enum OrgStatus {
+  Pending
+  UnderReview
+  Approved
+  Rejected
+}
+
+enum OrgDocumentKind {
+  Statute
+  BoardMinutes
 }
 
 enum AnimalSize {

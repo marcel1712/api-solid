@@ -36,12 +36,30 @@ pet can update it.
 - List all pets available for adoption in a given city
 - Filter pets by characteristics (age, size, type)
 - View details of a specific pet
-- Register an org
+- Register an org, identified by its CNPJ
 - Org login (JWT-based session)
+- Org verification: automatic CNPJ check against the Receita Federal
+  (via BrasilAPI), document upload to a private bucket, and manual
+  approval by an admin before the org's pets go public
 
 ## Business Rules
 
 - City is required to list pets
+- Every org registers with a CNPJ. It's validated locally (check digits)
+  and looked up at BrasilAPI: a CNPJ the Receita doesn't know is refused
+  (`422`, `code: "CNPJ_NOT_FOUND"`), one already in use gets `409`. If
+  the lookup itself fails, signup goes on and the reviewer re-runs it.
+- An org goes `Pending` → `UnderReview` (automatically, once both its
+  statute and board minutes are uploaded) → `Approved` or `Rejected`.
+  Only approved orgs appear in search, on public pet pages and on public
+  org profiles. Until then the org can sign in and register pets, which
+  stay drafts visible only to itself.
+- The CNPJ check (active registration, non-profit legal nature, city
+  match) is a note for the reviewer, never an automatic decision.
+- Approving or rejecting an org deletes its documents from storage and
+  the database; only the decision, its date and the rejection reason
+  remain. A rejected org can upload new documents to be reviewed again.
+- Admins are the verified accounts whose email is in `ADMIN_EMAILS`.
 - An org must always have an address and a WhatsApp number, stored as
   E.164 (`+5511989731163`). The client can send a bare Brazilian local
   number (`11989731163`), a formatted one (`(11) 98973-1163`), or one
@@ -205,17 +223,28 @@ Base routes are prefixed with `/orgs` and `/pets`.
 | `POST`  | `/orgs/verify-email/resend` |  No     | Request a new verification email (always returns the same generic response) |
 | `POST`  | `/orgs/password/forgot` |    No       | Request a password reset email (always returns the same generic response) |
 | `POST`  | `/orgs/password/reset`  |    No       | Reset the password using a valid token from the reset email |
-| `GET`   | `/orgs/:id`           |      No       | Get an org's public details (name, address, WhatsApp) |
+| `GET`   | `/orgs/:id`           |      No       | Get an approved org's public profile (name, city, address, WhatsApp) |
+| `GET`   | `/orgs/me`            |    **Yes**    | The authenticated org itself: status, rejection reason, which documents are in, `isAdmin` |
+| `POST`  | `/orgs/me/documents`  |    **Yes**    | Request a pre-signed upload URL for a registration document (`Statute` or `BoardMinutes`; PDF, JPEG or PNG up to 10 MB; type and size are signed into the URL) |
+| `POST`  | `/orgs/me/documents/confirm` | **Yes** | Confirm an uploaded document; with both in, the org moves to `UnderReview` |
 | `PATCH` | `/orgs/:id`           |    **Yes**    | Update the authenticated org's own information (owner only; email and password can't be changed here) |
 | `GET`   | `/orgs/me/pets`       |    **Yes**    | List the authenticated org's own pets, paginated, including adopted ones |
 | `POST`  | `/pets`               |    **Yes**    | Register a pet for the authenticated org      |
-| `GET`   | `/pets/:id`           |      No       | Get a pet's details, including the owning org's WhatsApp |
+| `GET`   | `/pets/:id`           |      No       | Get a pet's details, including the owning org's WhatsApp. `404` if the org isn't approved, unless the request carries that org's token |
 | `PATCH` | `/pets/:id`           |    **Yes**    | Update a pet's mutable information (owner org only; adoption status can't be changed here) |
 | `GET`   | `/pets/search`        |      No       | List available (non-adopted) pets by city, with optional filters (`ageMin`, `ageMax`, `size`, `type`) and pagination (`page`). Each pet includes the owning org's `whatsapp` and its `images` |
 | `PATCH` | `/pets/:id/adopt`     |    **Yes**    | Mark a pet as adopted/available (owner org only) |
 | `POST`  | `/pets/:id/images`    |    **Yes**    | Request a pre-signed upload URL for a new pet image (owner org only, max 3 per pet) |
 | `POST`  | `/pets/:id/images/confirm` | **Yes** | Confirm a completed upload, turning it into a persisted image |
 | `DELETE`| `/pets/:id/images/:imageId` | **Yes** | Delete one of the pet's images (owner org only) |
+
+Admin routes (signed in with an account listed in `ADMIN_EMAILS`):
+
+| Method  | Endpoint                     | Description |
+| ------- | ---------------------------- | ----------- |
+| `GET`   | `/admin/orgs?status=`        | Orgs in a status (default `UnderReview`), with their CNPJ check and 10-minute download links to their documents |
+| `POST`  | `/admin/orgs/:id/review`     | `{ "decision": "approve" }` or `{ "decision": "reject", "reason": "..." }`; deletes the documents and emails the org |
+| `POST`  | `/admin/orgs/:id/cnpj-check` | Re-run the BrasilAPI lookup |
 
 **Example — search**: `GET /pets/search?city=São Paulo&page=1&size=Small&type=Dog&ageMin=0&ageMax=2`
 
@@ -270,6 +299,19 @@ city          String         type          AnimalType (Dog | Cat | Bird | ...)
 address       String         bio           String?
 created_at    DateTime       created_at    DateTime
 emailVerifiedAt DateTime?     adopted       Boolean
+cnpj          String? (unique)
+status        OrgStatus (Pending | UnderReview | Approved | Rejected)
+cnpjCheck     Json? (BrasilAPI snapshot + flags, for the reviewer)
+rejectionReason String?
+reviewedAt    DateTime?
+
+OrgDocument (deleted once the org is reviewed)
+─────────────────
+id            String (PK)
+orgId         String (FK → Org.id)
+kind          OrgDocumentKind (Statute | BoardMinutes), unique per org
+key           String (object key in the private bucket)
+created_at    DateTime
 
 Session
 ─────────────────
@@ -294,7 +336,7 @@ created_at    DateTime
 
 ## Testing
 
-The project has **220 automated tests** across **39 test files**, split into:
+The project has **260 automated tests** across **44 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge
@@ -339,10 +381,15 @@ R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=
 R2_BUCKET_NAME=
 R2_PUBLIC_URL=
+# Private bucket for org documents (no public access, own CORS policy)
+R2_DOCUMENTS_BUCKET_NAME=
+
+# Comma-separated emails allowed into /admin (must be verified accounts)
+ADMIN_EMAILS=
 
 # Resend (transactional email, used for password reset)
 RESEND_API_KEY=
-MAIL_FROM="FindAFriend <onboarding@resend.dev>"
+MAIL_FROM="Tailhop <onboarding@resend.dev>"
 FRONTEND_URL="http://localhost:5173"
 ```
 
