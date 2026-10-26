@@ -35,9 +35,25 @@ interface BrasilApiCnpj {
 
 export class BrasilApiCnpjLookup implements CnpjLookup {
   async find(cnpj: string): Promise<CnpjRecord | null> {
+    try {
+      return await this.request(cnpj);
+    } catch (error) {
+      // Callers may carry on without the check (signup does), so this is the
+      // one place the reason is sure to be recorded.
+      console.error("BrasilAPI CNPJ lookup failed:", error);
+      throw error;
+    }
+  }
+
+  private async request(cnpj: string): Promise<CnpjRecord | null> {
     const response = await fetch(
       `https://brasilapi.com.br/api/cnpj/v1/${cnpj}`,
-      { signal: AbortSignal.timeout(TIMEOUT_MS) },
+      {
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+        // BrasilAPI sits behind Cloudflare, which answers 403 to Node's
+        // default `User-Agent: node`. Identifying the caller gets through.
+        headers: { "User-Agent": "Tailhop/1.0 (+https://tailhop.com.br)" },
+      },
     );
 
     // BrasilAPI answers 404 for an unknown CNPJ and 400 for a malformed one.

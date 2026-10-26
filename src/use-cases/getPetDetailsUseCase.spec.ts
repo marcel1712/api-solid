@@ -23,7 +23,7 @@ async function createOrg() {
     city: "São Paulo",
     address: "Rua das Flores, 123",
     created_at: new Date(),
-    cnpj: "11222333000181",
+    cnpj: "99999998999918",
     status: "Approved",
     cnpjCheck: null,
     rejectionReason: null,

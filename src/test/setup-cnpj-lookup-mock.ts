@@ -2,7 +2,7 @@ import { vi } from "vitest";
 import { normalizeCnpj } from "@/utils/cnpj";
 
 /** A valid CNPJ the fake Receita has never heard of. */
-export const UNKNOWN_CNPJ = "11222333000181";
+export const UNKNOWN_CNPJ = "99999998999918";
 
 // e2e specs register orgs through the real controller; without this, every
 // signup would call BrasilAPI over the network.
