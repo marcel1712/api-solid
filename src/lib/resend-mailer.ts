@@ -1,5 +1,10 @@
 import { Resend } from "resend";
 import { Mailer } from "@/lib/mailer";
+import {
+  EmailContent,
+  passwordResetEmail,
+  verificationEmail,
+} from "@/lib/email-templates";
 import env from "@/env/env";
 
 export class ResendMailer implements Mailer {
@@ -8,10 +13,11 @@ export class ResendMailer implements Mailer {
   // The SDK doesn't throw on a refused send (bad key, unverified domain,
   // quota): it resolves with `{ error }`. Unchecked, every failed email
   // looked like a success.
-  private async send(email: { to: string; subject: string; html: string }) {
+  private async send(to: string, content: EmailContent) {
     const { error } = await this.resend.emails.send({
       from: env.MAIL_FROM,
-      ...email,
+      to,
+      ...content,
     });
 
     if (error) {
@@ -26,15 +32,7 @@ export class ResendMailer implements Mailer {
     to: string;
     resetUrl: string;
   }): Promise<void> {
-    await this.send({
-      to,
-      subject: "Reset your FindAFriend password",
-      html: `
-        <p>We received a request to reset your FindAFriend password.</p>
-        <p><a href="${resetUrl}">Click here to choose a new password</a></p>
-        <p>This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
-      `,
-    });
+    await this.send(to, passwordResetEmail(resetUrl));
   }
 
   async sendVerificationEmail({
@@ -44,14 +42,6 @@ export class ResendMailer implements Mailer {
     to: string;
     verifyUrl: string;
   }): Promise<void> {
-    await this.send({
-      to,
-      subject: "Confirm your FindAFriend email",
-      html: `
-        <p>Welcome to FindAFriend! Please confirm your email address to activate your account.</p>
-        <p><a href="${verifyUrl}">Click here to confirm your email</a></p>
-        <p>This link expires in 24 hours. If you didn't create this account, you can safely ignore this email.</p>
-      `,
-    });
+    await this.send(to, verificationEmail(verifyUrl));
   }
 }
