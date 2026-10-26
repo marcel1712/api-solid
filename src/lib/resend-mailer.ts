@@ -5,6 +5,20 @@ import env from "@/env/env";
 export class ResendMailer implements Mailer {
   private resend = new Resend(env.RESEND_API_KEY);
 
+  // The SDK doesn't throw on a refused send (bad key, unverified domain,
+  // quota): it resolves with `{ error }`. Unchecked, every failed email
+  // looked like a success.
+  private async send(email: { to: string; subject: string; html: string }) {
+    const { error } = await this.resend.emails.send({
+      from: env.MAIL_FROM,
+      ...email,
+    });
+
+    if (error) {
+      throw new Error(`Resend refused the email: ${error.name}: ${error.message}`);
+    }
+  }
+
   async sendPasswordResetEmail({
     to,
     resetUrl,
@@ -12,8 +26,7 @@ export class ResendMailer implements Mailer {
     to: string;
     resetUrl: string;
   }): Promise<void> {
-    await this.resend.emails.send({
-      from: env.MAIL_FROM,
+    await this.send({
       to,
       subject: "Reset your FindAFriend password",
       html: `
@@ -31,8 +44,7 @@ export class ResendMailer implements Mailer {
     to: string;
     verifyUrl: string;
   }): Promise<void> {
-    await this.resend.emails.send({
-      from: env.MAIL_FROM,
+    await this.send({
       to,
       subject: "Confirm your FindAFriend email",
       html: `

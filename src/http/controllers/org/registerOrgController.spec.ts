@@ -100,6 +100,40 @@ describe("Register Org Controller (e2e)", () => {
     expect(response.statusCode).toEqual(409);
   });
 
+  it("should not be able to register an org with an already registered whatsapp", async () => {
+    await app.ready();
+
+    const whatsapp = randomWhatsapp();
+
+    await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: {
+        name: "Pet Friends",
+        email: `${randomUUID()}@email.com`,
+        password: "password123",
+        whatsapp,
+        city: "São Carlos",
+        address: "Rua das Flores, 900",
+      },
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: {
+        name: "Other Pet Friends",
+        email: `${randomUUID()}@email.com`,
+        password: "password123",
+        whatsapp,
+        city: "Rio de Janeiro",
+        address: "Rua das Palmeiras, 456",
+      },
+    });
+
+    expect(response.statusCode).toEqual(409);
+  });
+
   it("should not be able to register an org without an address", async () => {
     await app.ready();
 

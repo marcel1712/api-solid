@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { FastifyRequest } from "fastify";
 import { orgRoutes, petRoutes } from "@/http/routes";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
@@ -7,7 +7,22 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import { errorHandler } from "@/http/error-handler";
 import env from "@/env/env";
 
-const app = Fastify({ trustProxy: true });
+// Logs go to stdout, which is what Render's log viewer reads. Off in tests to
+// keep the output readable.
+const app = Fastify({
+  trustProxy: true,
+  logger: env.NODE_ENV !== "test" && {
+    serializers: {
+      // The query string is left out on purpose: email verification links
+      // carry their token there, and logs are no place for live tokens.
+      req: (request: FastifyRequest) => ({
+        method: request.method,
+        url: request.url.split("?")[0],
+        ip: request.ip,
+      }),
+    },
+  },
+});
 
 app.get("/", async function handler() {
   return "Findafriend";

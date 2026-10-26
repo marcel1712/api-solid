@@ -133,6 +133,22 @@ describe("Update Org Controller (e2e)", () => {
     expect(response.statusCode).toEqual(403);
   });
 
+  it("should not be able to take another org's whatsapp", async () => {
+    await app.ready();
+
+    const org = await createOrg();
+    const otherOrg = await createOrg();
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/orgs/${org.id}`,
+      headers: { authorization: `Bearer ${org.token}` },
+      payload: { whatsapp: otherOrg.whatsapp },
+    });
+
+    expect(response.statusCode).toEqual(409);
+  });
+
   it("should not be able to update an org without authentication", async () => {
     await app.ready();
 

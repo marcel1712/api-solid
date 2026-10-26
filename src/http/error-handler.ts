@@ -8,7 +8,6 @@ import { LimitExceededError } from "@/use-cases/errors/limit-exceeded-error";
 import { InvalidOrExpiredTokenError } from "@/use-cases/errors/invalid-or-expired-token-error";
 import { EmailNotVerifiedError } from "@/use-cases/errors/email-not-verified-error";
 import { InvalidSessionError } from "@/use-cases/errors/invalid-session-error";
-import env from "@/env/env";
 
 export function errorHandler(
   error: FastifyError,
@@ -58,10 +57,11 @@ export function errorHandler(
     return reply.status(429).send({ message: error.message });
   }
 
-  if (env.NODE_ENV !== "production") {
-    console.error(error);
-  }
+  // The client only ever sees the generic message below; the details go to
+  // the server log. Silencing this in production left every 500 on Render
+  // without a trace.
+  request.log.error(error);
 
-  // TODO: send unexpected errors to an external log/monitoring tool (e.g. Sentry, Datadog) in production
+  // TODO: send unexpected errors to an external monitoring tool (e.g. Sentry)
   return reply.status(500).send({ message: "Internal server error" });
 }
