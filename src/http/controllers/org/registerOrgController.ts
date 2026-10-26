@@ -2,8 +2,6 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { makeRegisterOrgUseCase } from "@/use-cases/factories/make-register-org-use-case";
 import { makeSendEmailVerificationUseCase } from "@/use-cases/factories/make-send-email-verification-use-case";
-import { generateOrgTokens } from "@/http/utils/generate-org-tokens";
-import { refreshTokenCookieOptions } from "@/http/utils/refresh-token-cookie-options";
 import { normalizeWhatsapp } from "@/utils/normalize-whatsapp";
 
 export async function registerOrgController(
@@ -36,8 +34,6 @@ export async function registerOrgController(
     address,
   });
 
-  const { token, refreshToken } = await generateOrgTokens(org.id);
-
   try {
     const sendEmailVerificationUseCase = makeSendEmailVerificationUseCase();
     await sendEmailVerificationUseCase.execute({
@@ -52,11 +48,7 @@ export async function registerOrgController(
 
   const { password_hash: _password_hash, ...publicOrg } = org;
 
-  return reply
-    .status(201)
-    .setCookie("refreshToken", refreshToken, refreshTokenCookieOptions)
-    .send({
-      ...publicOrg,
-      token,
-    });
+  // No session here: the org can't sign in until it verifies its email, and
+  // handing out a token at signup would let it skip that check entirely.
+  return reply.status(201).send(publicOrg);
 }

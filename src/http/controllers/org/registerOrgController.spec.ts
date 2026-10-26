@@ -35,14 +35,14 @@ describe("Register Org Controller (e2e)", () => {
         id: expect.any(String),
         name: "Pet Friends",
         email,
-        token: expect.any(String),
       }),
     );
+    expect(response.json()).not.toHaveProperty("token");
     expect(response.json()).not.toHaveProperty("org");
     expect(response.json()).not.toHaveProperty("password_hash");
   });
 
-  it("should set a refreshToken cookie when registering an org", async () => {
+  it("should not open a session when registering an org", async () => {
     await app.ready();
 
     const response = await app.inject({
@@ -63,8 +63,7 @@ describe("Register Org Controller (e2e)", () => {
       (cookie) => cookie.name === "refreshToken",
     );
 
-    expect(refreshTokenCookie).toBeDefined();
-    expect(refreshTokenCookie?.httpOnly).toBe(true);
+    expect(refreshTokenCookie).toBeUndefined();
   });
 
   it("should not be able to register an org with an already registered email", async () => {

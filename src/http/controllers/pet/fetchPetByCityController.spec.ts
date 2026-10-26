@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+import { signInRegisteredOrg } from "@/test/sign-in-registered-org";
 
 const PAGE_SIZE = 20;
 
@@ -22,7 +23,7 @@ async function createOrg(city: string) {
     },
   });
 
-  return response.json();
+  return signInRegisteredOrg(app, response.json());
 }
 
 async function createPet(token: string, overrides: Record<string, unknown> = {}) {

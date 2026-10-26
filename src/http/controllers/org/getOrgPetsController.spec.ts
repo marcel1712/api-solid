@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+import { signInRegisteredOrg } from "@/test/sign-in-registered-org";
 
 function randomWhatsapp() {
   return `+551199${Math.floor(1000000 + Math.random() * 8999999)}`;
@@ -20,7 +21,7 @@ async function createOrg() {
     },
   });
 
-  return response.json();
+  return signInRegisteredOrg(app, response.json());
 }
 
 async function createPet(token: string, overrides: Record<string, unknown> = {}) {
