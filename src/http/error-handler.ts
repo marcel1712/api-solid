@@ -7,6 +7,7 @@ import { ResourceAlreadyExistsError } from "@/use-cases/errors/resource-already-
 import { LimitExceededError } from "@/use-cases/errors/limit-exceeded-error";
 import { InvalidOrExpiredTokenError } from "@/use-cases/errors/invalid-or-expired-token-error";
 import { EmailNotVerifiedError } from "@/use-cases/errors/email-not-verified-error";
+import { InvalidSessionError } from "@/use-cases/errors/invalid-session-error";
 import env from "@/env/env";
 
 export function errorHandler(
@@ -43,6 +44,10 @@ export function errorHandler(
 
   if (error instanceof InvalidOrExpiredTokenError) {
     return reply.status(400).send({ message: error.message });
+  }
+
+  if (error instanceof InvalidSessionError) {
+    return reply.status(401).send({ message: error.message });
   }
 
   if (error instanceof EmailNotVerifiedError) {

@@ -57,9 +57,8 @@ pet can update it.
 - Only the org that registered a pet can update its adoption status
 - A pet can have at most 3 images; only the owning org can upload or remove them
 - An org must verify its email (link sent on registration) before it can
-  log in — registration itself still returns a working session token, so
-  the newly registered org isn't locked out of its own account while
-  waiting for the email
+  log in — registration doesn't open a session, so nothing can be
+  published from an address nobody has confirmed
 
 ## Tech Stack
 
@@ -131,8 +130,22 @@ Prisma / PostgreSQL   or   In-Memory (tests)
 ## Security
 
 - **Password hashing** with bcrypt — plaintext passwords are never stored.
-- **JWT-based sessions**: login issues a short-lived access token plus an
-  `httpOnly`, `SameSite` refresh cookie (never exposed to client-side JS).
+- **Short-lived access token + revocable refresh session**: login returns a
+  15-minute JWT (HS256, algorithm pinned on verification) to be kept in
+  the client's memory, and sets an opaque refresh token in an `httpOnly`,
+  `Secure`, `SameSite=Lax` cookie scoped to `/orgs/sessions` — it never
+  reaches client-side JS nor travels with any other API call. Only its
+  SHA-256 hash is stored, in the `Session` table.
+- **Refresh token rotation with reuse detection**: every
+  `POST /orgs/sessions/refresh` revokes the presented token and issues a
+  new one. A rotated token presented again means it was copied, so every
+  session of that org is revoked. The one exception is a 30-second grace
+  window for a token whose replacement is still alive, so two tabs
+  refreshing at once don't log the org out.
+- **Server-side sign-out and revocation**: `DELETE /orgs/sessions` revokes
+  the session, and a password reset revokes every session of the org.
+- **Security headers** via `@fastify/helmet`, with a `default-src 'none'`
+  CSP since the API only serves JSON.
 - **Route-level authorization** via a `verifyJwt` middleware, applied only to
   the routes that mutate data (`POST /pets`, `PATCH /pets/:id`,
   `PATCH /pets/:id/adopt`, `PATCH /orgs/:id`) — read endpoints stay public
@@ -169,7 +182,8 @@ Prisma / PostgreSQL   or   In-Memory (tests)
   is capped at 100 requests/minute per IP by default, with stricter
   per-route limits on the endpoints most attractive to abuse —
   `POST /orgs` and `POST /orgs/password/forgot` (5/hour), `POST
-  /orgs/sessions` (5/minute, brute-force protection), and `POST
+  /orgs/sessions` (5/minute, brute-force protection), `POST
+  /orgs/sessions/refresh` (30/minute), and `POST
   /orgs/password/reset` (10/hour). Disabled when `NODE_ENV=test` so the
   test suite isn't affected. Requires `trustProxy: true` (set on the
   Fastify instance) to key limits by the real client IP behind Render's
@@ -183,8 +197,10 @@ Base routes are prefixed with `/orgs` and `/pets`.
 
 | Method  | Endpoint             | Auth required | Description                                   |
 | ------- | --------------------- | :-----------: | ---------------------------------------------- |
-| `POST`  | `/orgs`               |      No       | Register a new org (auto-login: returns a token; sends a verification email) |
-| `POST`  | `/orgs/sessions`      |      No       | Authenticate an org (login; requires a verified email) |
+| `POST`  | `/orgs`               |      No       | Register a new org (sends a verification email; doesn't open a session) |
+| `POST`  | `/orgs/sessions`      |      No       | Authenticate an org (login; requires a verified email). Returns the access token and sets the refresh cookie |
+| `POST`  | `/orgs/sessions/refresh` |   Cookie    | Rotate the refresh cookie and return a new access token |
+| `DELETE`| `/orgs/sessions`      |    Cookie     | Sign out: revoke the session and clear the cookie |
 | `GET`   | `/orgs/verify-email`  |      No       | Confirm the org's email using the token from the verification email |
 | `POST`  | `/orgs/verify-email/resend` |  No     | Request a new verification email (always returns the same generic response) |
 | `POST`  | `/orgs/password/forgot` |    No       | Request a password reset email (always returns the same generic response) |
@@ -255,6 +271,16 @@ address       String         bio           String?
 created_at    DateTime       created_at    DateTime
 emailVerifiedAt DateTime?     adopted       Boolean
 
+Session
+─────────────────
+id            String (PK)
+orgId         String (FK → Org.id)
+tokenHash     String (unique, SHA-256 of the refresh token)
+expiresAt     DateTime
+revokedAt     DateTime?
+replacedById  String? (the session it was rotated into)
+created_at    DateTime
+
                               PetImage
                               ─────────────────
                               id            String (PK)
@@ -268,7 +294,7 @@ emailVerifiedAt DateTime?     adopted       Boolean
 
 ## Testing
 
-The project has **203 automated tests** across **36 test files**, split into:
+The project has **220 automated tests** across **39 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge
@@ -421,7 +447,7 @@ src/
 ├── http/
 │   ├── controllers/       # One folder per resource (org, pet); *.spec.ts = e2e tests
 │   ├── middlewares/       # verify-jwt (authentication)
-│   ├── utils/             # JWT token generation
+│   ├── utils/             # access token and refresh cookie settings
 │   ├── error-handler.ts   # Centralized HTTP error mapping
 │   └── routes.ts
 ├── lib/                   # Prisma client + R2 (S3) client singletons

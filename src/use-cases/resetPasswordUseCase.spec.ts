@@ -4,12 +4,14 @@ import { OrgRepository } from "../repositories/org-repository";
 import { PasswordResetTokenRepository } from "../repositories/password-reset-token-repository";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
 import { InMemoryPasswordResetTokenRepository } from "../repositories/in-memory/in-memory-password-reset-token-repository";
+import { InMemorySessionRepository } from "../repositories/in-memory/in-memory-session-repository";
 import { ResetPasswordUseCase } from "./resetPasswordUseCase";
 import { InvalidOrExpiredTokenError } from "./errors/invalid-or-expired-token-error";
 import { hashToken } from "@/utils/hash-token";
 
 let orgRepository: OrgRepository;
 let passwordResetTokenRepository: PasswordResetTokenRepository;
+let sessionRepository: InMemorySessionRepository;
 let sut: ResetPasswordUseCase;
 
 async function createOrg() {
@@ -35,7 +37,12 @@ describe("Reset Password Use Case", () => {
   beforeEach(() => {
     orgRepository = new InMemoryOrgRepository();
     passwordResetTokenRepository = new InMemoryPasswordResetTokenRepository();
-    sut = new ResetPasswordUseCase(orgRepository, passwordResetTokenRepository);
+    sessionRepository = new InMemorySessionRepository();
+    sut = new ResetPasswordUseCase(
+      orgRepository,
+      passwordResetTokenRepository,
+      sessionRepository,
+    );
   });
 
   it("should be able to reset the password with a valid token", async () => {
@@ -62,6 +69,27 @@ describe("Reset Password Use Case", () => {
       passwordResetTokenRepository as InMemoryPasswordResetTokenRepository
     ).items.find((item) => item.id === token.id);
     expect(usedToken?.usedAt).not.toBeNull();
+  });
+
+  it("should revoke every session of the org after a reset", async () => {
+    const org = await createOrg();
+    await createValidToken(org.id, "raw-token");
+    await sessionRepository.create({
+      orgId: org.id,
+      tokenHash: "session-1",
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    });
+    await sessionRepository.create({
+      orgId: org.id,
+      tokenHash: "session-2",
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    });
+
+    await sut.execute({ token: "raw-token", password: "new-password123" });
+
+    expect(
+      sessionRepository.items.every((session) => session.revokedAt !== null),
+    ).toBe(true);
   });
 
   it("should not be able to reuse a token", async () => {

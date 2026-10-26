@@ -10,6 +10,8 @@ import { verifyEmailController } from "@/http/controllers/org/verifyEmailControl
 import { resendEmailVerificationController } from "@/http/controllers/org/resendEmailVerificationController";
 import { FastifyInstance } from "fastify";
 import { authenticateOrgController } from "./controllers/org/authenticateOrgController";
+import { refreshSessionController } from "./controllers/org/refreshSessionController";
+import { signOutController } from "./controllers/org/signOutController";
 import { fetchPetByCityController } from "./controllers/pet/fetchPetByCityController";
 import { markPetAsAdoptedController } from "./controllers/pet/markPetAsAdoptedController";
 import { updatePetController } from "./controllers/pet/updatePetController";
@@ -29,6 +31,12 @@ export async function orgRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
     authenticateOrgController,
   );
+  app.post(
+    "/sessions/refresh",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    refreshSessionController,
+  );
+  app.delete("/sessions", signOutController);
   app.get("/:id", getOrgDetailsController);
   app.patch("/:id", { onRequest: [verifyJwt] }, updateOrgController);
   app.get("/me/pets", { onRequest: [verifyJwt] }, getOrgPetsController);

@@ -1,8 +1,12 @@
 import { makeAuthenticateOrgUseCase } from "@/use-cases/factories/make-authenticate-org-use-case";
+import { makeCreateSessionUseCase } from "@/use-cases/factories/make-create-session-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { generateOrgTokens } from "@/http/utils/generate-org-tokens";
-import { refreshTokenCookieOptions } from "@/http/utils/refresh-token-cookie-options";
+import { generateAccessToken } from "@/http/utils/generate-access-token";
+import {
+  REFRESH_TOKEN_COOKIE,
+  refreshTokenCookieOptions,
+} from "@/http/utils/refresh-token-cookie-options";
 
 export async function authenticateOrgController(
   request: FastifyRequest,
@@ -19,10 +23,13 @@ export async function authenticateOrgController(
 
   const { org } = await authenticateOrgUseCase.execute({ email, password });
 
-  const { token, refreshToken } = await generateOrgTokens(org.id);
+  const createSessionUseCase = makeCreateSessionUseCase();
+  const { refreshToken } = await createSessionUseCase.execute({
+    orgId: org.id,
+  });
 
   return reply
     .status(200)
-    .setCookie("refreshToken", refreshToken, refreshTokenCookieOptions)
-    .send({ token });
+    .setCookie(REFRESH_TOKEN_COOKIE, refreshToken, refreshTokenCookieOptions)
+    .send({ token: generateAccessToken(org.id) });
 }
