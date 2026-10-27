@@ -67,12 +67,19 @@ export function errorHandler(
     return reply.status(429).send({ message: error.message });
   }
 
+  // Fastify itself raises 4xx errors (malformed JSON body, wrong
+  // content-type, oversized payload) that match none of the cases above.
+  // These are the client's fault, not ours: pass the status through instead
+  // of masking them as a 500 and reporting them as a server bug.
+  if (error.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
+    return reply.status(error.statusCode).send({ message: error.message });
+  }
+
   // The client only ever sees the generic message below; the details go to
   // the server log. Silencing this in production left every 500 on Render
   // without a trace.
   request.log.error(error);
   reportError(error, { route: request.routeOptions.url, method: request.method });
 
-  // TODO: send unexpected errors to an external monitoring tool (e.g. Sentry)
   return reply.status(500).send({ message: "Internal server error" });
 }
