@@ -3,6 +3,7 @@ import { z } from "zod";
 import { makeReviewOrgUseCase } from "@/use-cases/factories/make-review-org-use-case";
 import { ResendMailer } from "@/lib/resend-mailer";
 import { toOwnOrg } from "@/http/utils/org-views";
+import { reportError } from "@/lib/monitoring";
 import env from "@/env/env";
 
 export async function reviewOrgController(
@@ -45,6 +46,7 @@ export async function reviewOrgController(
   } catch (error) {
     // The decision is saved; the org also sees it on its dashboard.
     request.log.error(error, "Failed to send the review decision email");
+    reportError(error, { email: "review decision" });
   }
 
   return reply.status(200).send(toOwnOrg(org));

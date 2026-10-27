@@ -39,6 +39,8 @@ const envSchema = z.object({
         .map((email) => email.trim().toLowerCase())
         .filter(Boolean),
     ),
+  // Optional: without it, errors are only logged, not sent anywhere.
+  SENTRY_DSN: z.string().url().optional(),
   FRONTEND_URL: z
     .string()
     .url()

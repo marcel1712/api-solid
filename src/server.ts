@@ -1,4 +1,6 @@
+import "@/instrument";
 import app from "@/app";
+import { reportError } from "@/lib/monitoring";
 import env from "@/env/env";
 import { makePurgeExpiredAuthRecordsUseCase } from "@/use-cases/factories/make-purge-expired-auth-records-use-case";
 
@@ -13,6 +15,7 @@ async function purgeExpiredAuthRecords() {
     app.log.info({ removed }, "Purged expired auth records");
   } catch (error) {
     app.log.error(error, "Failed to purge expired auth records");
+    reportError(error, { job: "purge expired auth records" });
   }
 }
 

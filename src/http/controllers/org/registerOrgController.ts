@@ -5,6 +5,7 @@ import { makeSendEmailVerificationUseCase } from "@/use-cases/factories/make-sen
 import { normalizeWhatsapp } from "@/utils/normalize-whatsapp";
 import { isValidCnpj, normalizeCnpj } from "@/utils/cnpj";
 import { toOwnOrg } from "@/http/utils/org-views";
+import { reportError } from "@/lib/monitoring";
 import { ACCEPTED_TERMS_VERSIONS } from "@/utils/terms";
 
 export async function registerOrgController(
@@ -57,6 +58,7 @@ export async function registerOrgController(
     // The org is already created at this point — a flaky email provider
     // shouldn't fail the whole registration. Verification can be re-sent.
     request.log.error(error, "Failed to send the verification email");
+    reportError(error, { email: "verification" });
   }
 
   // No session here: the org can't sign in until it verifies its email, and

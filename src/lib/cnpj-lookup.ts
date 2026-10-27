@@ -1,3 +1,5 @@
+import { reportError } from "@/lib/monitoring";
+
 export interface CnpjRecord {
   legalName: string;
   tradeName: string | null;
@@ -41,6 +43,9 @@ export class BrasilApiCnpjLookup implements CnpjLookup {
       // Callers may carry on without the check (signup does), so this is the
       // one place the reason is sure to be recorded.
       console.error("BrasilAPI CNPJ lookup failed:", error);
+      // Signup goes on without the check, so this is the only way to learn
+      // that every lookup is failing (as when BrasilAPI started blocking us).
+      reportError(error, { service: "BrasilAPI" });
       throw error;
     }
   }

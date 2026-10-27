@@ -9,6 +9,7 @@ import { InvalidOrExpiredTokenError } from "@/use-cases/errors/invalid-or-expire
 import { EmailNotVerifiedError } from "@/use-cases/errors/email-not-verified-error";
 import { InvalidSessionError } from "@/use-cases/errors/invalid-session-error";
 import { CnpjNotFoundError } from "@/use-cases/errors/cnpj-not-found-error";
+import { reportError } from "@/lib/monitoring";
 
 export function errorHandler(
   error: FastifyError,
@@ -70,6 +71,7 @@ export function errorHandler(
   // the server log. Silencing this in production left every 500 on Render
   // without a trace.
   request.log.error(error);
+  reportError(error, { route: request.routeOptions.url, method: request.method });
 
   // TODO: send unexpected errors to an external monitoring tool (e.g. Sentry)
   return reply.status(500).send({ message: "Internal server error" });

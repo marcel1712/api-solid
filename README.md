@@ -71,6 +71,12 @@ pet can update it.
   at startup and every 6 hours by an in-process job (`src/server.ts`).
   Rotated sessions are kept until they expire, since they're what
   detects a stolen refresh token being reused.
+- Unexpected errors (500s), failed emails, failed BrasilAPI lookups and
+  failed purge runs are reported to Sentry when `SENTRY_DSN` is set.
+  Reports carry the error, the stack and the route, and nothing personal:
+  the SDK's data collection is turned off (no bodies, cookies, query
+  strings, user info or local variable values) and `scrubEvent` strips
+  the same fields again before sending.
 - Public reads (`GET /pets/search`, `GET /pets/:id`, `GET /orgs/:id`)
   send `Cache-Control: public, max-age=30, stale-while-revalidate=300`;
   with an `Authorization` header (an org seeing its own drafts) they send
@@ -353,7 +359,7 @@ created_at    DateTime
 
 ## Testing
 
-The project has **265 automated tests** across **45 test files**, split into:
+The project has **267 automated tests** across **46 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge
@@ -403,6 +409,9 @@ R2_DOCUMENTS_BUCKET_NAME=
 
 # Comma-separated emails allowed into /admin (must be verified accounts)
 ADMIN_EMAILS=
+
+# Optional: Sentry DSN for error reports (nothing is sent when empty)
+SENTRY_DSN=
 
 # Resend (transactional email, used for password reset)
 RESEND_API_KEY=
