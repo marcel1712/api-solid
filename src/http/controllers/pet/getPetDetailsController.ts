@@ -1,3 +1,4 @@
+import { setPublicCache } from "@/http/utils/public-cache";
 import { makeGetPetUseCase } from "@/use-cases/factories/make-get-pet-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -34,6 +35,8 @@ export async function getPetDetailsController(
     })
 
     const petDetails: GetPetDetailsResponse = { ...pet, whatsapp, images };
+
+    setPublicCache(request, reply);
 
     return reply.status(200).send(petDetails);
 }

@@ -40,6 +40,12 @@ export class InMemoryPasswordResetTokenRepository
     }
   }
 
+  async deleteExpiredBefore(date: Date): Promise<number> {
+    const before = this.items.length;
+    this.items = this.items.filter((item) => item.expiresAt >= date);
+    return before - this.items.length;
+  }
+
   async deleteManyByOrgId(orgId: string): Promise<void> {
     this.items = this.items.filter((item) => item.orgId !== orgId);
   }

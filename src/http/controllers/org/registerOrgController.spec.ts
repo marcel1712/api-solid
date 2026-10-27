@@ -1,4 +1,4 @@
-import { CURRENT_TERMS_VERSION } from "@/utils/terms";
+import { ACCEPTED_TERMS_VERSIONS, CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
@@ -171,6 +171,27 @@ describe("Register Org Controller (e2e)", () => {
     const org = await prisma.org.findUnique({ where: { email } });
     expect(org?.termsVersion).toEqual(CURRENT_TERMS_VERSION);
     expect(org?.termsAcceptedAt).toBeInstanceOf(Date);
+  });
+
+  it("should still accept the previous terms version during a rollout", async () => {
+    await app.ready();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: {
+        name: "Pet Friends",
+        email: `${randomUUID()}@email.com`,
+        password: "password123",
+        whatsapp: randomWhatsapp(),
+        city: "São Carlos",
+        address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
+        termsVersion: ACCEPTED_TERMS_VERSIONS[1],
+      },
+    });
+
+    expect(response.statusCode).toEqual(201);
   });
 
   it("should not register without accepting the current terms", async () => {

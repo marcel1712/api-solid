@@ -5,7 +5,7 @@ import { makeSendEmailVerificationUseCase } from "@/use-cases/factories/make-sen
 import { normalizeWhatsapp } from "@/utils/normalize-whatsapp";
 import { isValidCnpj, normalizeCnpj } from "@/utils/cnpj";
 import { toOwnOrg } from "@/http/utils/org-views";
-import { CURRENT_TERMS_VERSION } from "@/utils/terms";
+import { ACCEPTED_TERMS_VERSIONS } from "@/utils/terms";
 
 export async function registerOrgController(
   request: FastifyRequest,
@@ -25,9 +25,10 @@ export async function registerOrgController(
       .string()
       .transform(normalizeCnpj)
       .refine(isValidCnpj, "Invalid CNPJ"),
-    // Consent has to be given to the text that's live now: a page opened
-    // before an update would send the old version and be turned away.
-    termsVersion: z.literal(CURRENT_TERMS_VERSION),
+    // Consent has to be given to a text that's live (see ACCEPTED_TERMS_VERSIONS):
+    // a page opened long before an update sends a retired version and is
+    // turned away.
+    termsVersion: z.enum(ACCEPTED_TERMS_VERSIONS),
   });
 
   const { name, email, password, whatsapp, city, address, cnpj, termsVersion } =

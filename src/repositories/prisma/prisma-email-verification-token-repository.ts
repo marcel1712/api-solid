@@ -30,6 +30,13 @@ export class PrismaEmailVerificationTokenRepository
     });
   }
 
+  async deleteExpiredBefore(date: Date): Promise<number> {
+    const { count } = await this.prisma.emailVerificationToken.deleteMany({
+      where: { expiresAt: { lt: date } },
+    });
+    return count;
+  }
+
   async deleteManyByOrgId(orgId: string): Promise<void> {
     await this.prisma.emailVerificationToken.deleteMany({ where: { orgId } });
   }

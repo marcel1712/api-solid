@@ -1,3 +1,4 @@
+import { setPublicCache } from "@/http/utils/public-cache";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { makeGetOrgDetailsUseCase } from "@/use-cases/factories/make-get-org-use-case";
@@ -13,6 +14,8 @@ export async function getOrgDetailsController(request: FastifyRequest, reply: Fa
 
     const getOrgDetailsUseCase = makeGetOrgDetailsUseCase();
     const org = await getOrgDetailsUseCase.execute({ orgId: id });
+
+    setPublicCache(request, reply);
 
     return reply.status(200).send(toPublicOrg(org));
 }

@@ -47,6 +47,12 @@ export class InMemorySessionRepository implements SessionRepository {
     }
   }
 
+  async deleteExpiredBefore(date: Date): Promise<number> {
+    const before = this.items.length;
+    this.items = this.items.filter((item) => item.expiresAt >= date);
+    return before - this.items.length;
+  }
+
   async revokeAllByOrgId(orgId: string): Promise<void> {
     for (const session of this.items) {
       if (session.orgId === orgId && session.revokedAt === null) {

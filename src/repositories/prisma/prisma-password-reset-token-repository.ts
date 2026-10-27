@@ -30,6 +30,13 @@ export class PrismaPasswordResetTokenRepository
     });
   }
 
+  async deleteExpiredBefore(date: Date): Promise<number> {
+    const { count } = await this.prisma.passwordResetToken.deleteMany({
+      where: { expiresAt: { lt: date } },
+    });
+    return count;
+  }
+
   async deleteManyByOrgId(orgId: string): Promise<void> {
     await this.prisma.passwordResetToken.deleteMany({ where: { orgId } });
   }

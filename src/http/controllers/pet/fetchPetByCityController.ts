@@ -1,3 +1,4 @@
+import { setPublicCache } from "@/http/utils/public-cache";
 import { makeFetchPetByCityUseCase } from "@/use-cases/factories/make-fetch-pet-by-city-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -28,6 +29,8 @@ export async function fetchPetByCityController(
     size,
     type,
   });
+
+  setPublicCache(request, reply);
 
   return reply.status(200).send(pets);
 }

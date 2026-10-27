@@ -13,4 +13,6 @@ export interface EmailVerificationTokenRepository {
   findByTokenHash(tokenHash: string): Promise<EmailVerificationToken | null>;
   markUsed(id: string): Promise<void>;
   deleteManyByOrgId(orgId: string): Promise<void>;
+  /** Removes tokens that expired before `date`; returns how many. */
+  deleteExpiredBefore(date: Date): Promise<number>;
 }

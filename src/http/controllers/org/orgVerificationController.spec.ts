@@ -198,6 +198,9 @@ describe("Org verification (e2e)", () => {
 
       expect(anonymous.statusCode).toEqual(404);
       expect(owner.statusCode).toEqual(200);
+      // The owner's view includes a draft: no cache may keep it for others.
+      expect(owner.headers["cache-control"]).toEqual("private, no-store");
+      expect(search.headers["cache-control"]).toContain("public");
       expect(
         search.json().some((item: { id: string }) => item.id === pet.id),
       ).toBe(false);
