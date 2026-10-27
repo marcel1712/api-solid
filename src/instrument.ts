@@ -8,7 +8,6 @@ import { scrubBreadcrumb, scrubEvent } from "@/lib/monitoring";
 Sentry.init({
   dsn: env.SENTRY_DSN,
   environment: env.NODE_ENV,
-  debug: true, // TEMP: diagnosing why events weren't reaching Sentry, remove once confirmed
   // The SDK's defaults collect far more than a bug report needs: request
   // bodies (passwords), local variable values in each stack frame (the same
   // passwords, a moment earlier), database query data, cookies. All of it
