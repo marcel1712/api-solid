@@ -28,6 +28,8 @@ async function createOrg() {
     cnpjCheck: null,
     rejectionReason: null,
     reviewedAt: null,
+    termsVersion: null,
+    termsAcceptedAt: null,
     emailVerifiedAt: new Date(),
   });
 }

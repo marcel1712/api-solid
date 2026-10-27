@@ -1,3 +1,4 @@
+import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
@@ -20,6 +21,7 @@ function signup(overrides: Record<string, unknown> = {}) {
       city: "São Carlos",
       address: "Rua das Flores, 900",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
       ...overrides,
     },
   });

@@ -1,3 +1,4 @@
+import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
@@ -22,6 +23,7 @@ async function createOrg(city: string) {
       city,
       address: "Rua das Flores, 900",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
     },
   });
 

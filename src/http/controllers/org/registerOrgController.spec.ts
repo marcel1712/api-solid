@@ -1,6 +1,8 @@
+import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+import { prisma } from "@/lib/prisma";
 import { randomCnpj } from "@/test/random-cnpj";
 
 function randomWhatsapp() {
@@ -28,6 +30,7 @@ describe("Register Org Controller (e2e)", () => {
         city: "São Carlos",
         address: "Rua das Flores, 900",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
@@ -58,6 +61,7 @@ describe("Register Org Controller (e2e)", () => {
         city: "São Carlos",
         address: "Rua das Flores, 900",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
@@ -85,6 +89,7 @@ describe("Register Org Controller (e2e)", () => {
         city: "São Carlos",
         address: "Rua das Flores, 900",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
@@ -99,6 +104,7 @@ describe("Register Org Controller (e2e)", () => {
         city: "Rio de Janeiro",
         address: "Rua das Palmeiras, 456",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
@@ -121,6 +127,7 @@ describe("Register Org Controller (e2e)", () => {
         city: "São Carlos",
         address: "Rua das Flores, 900",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
@@ -135,10 +142,71 @@ describe("Register Org Controller (e2e)", () => {
         city: "Rio de Janeiro",
         address: "Rua das Palmeiras, 456",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
     expect(response.statusCode).toEqual(409);
+  });
+
+  it("should record which terms version was accepted, and when", async () => {
+    await app.ready();
+
+    const email = `${randomUUID()}@email.com`;
+    await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: {
+        name: "Pet Friends",
+        email,
+        password: "password123",
+        whatsapp: randomWhatsapp(),
+        city: "São Carlos",
+        address: "Rua das Flores, 900",
+        cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
+      },
+    });
+
+    const org = await prisma.org.findUnique({ where: { email } });
+    expect(org?.termsVersion).toEqual(CURRENT_TERMS_VERSION);
+    expect(org?.termsAcceptedAt).toBeInstanceOf(Date);
+  });
+
+  it("should not register without accepting the current terms", async () => {
+    await app.ready();
+
+    const payload = {
+      name: "Pet Friends",
+      password: "password123",
+      city: "São Carlos",
+      address: "Rua das Flores, 900",
+    };
+
+    const missing = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: {
+        ...payload,
+        email: `${randomUUID()}@email.com`,
+        whatsapp: randomWhatsapp(),
+        cnpj: randomCnpj(),
+      },
+    });
+    const outdated = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: {
+        ...payload,
+        email: `${randomUUID()}@email.com`,
+        whatsapp: randomWhatsapp(),
+        cnpj: randomCnpj(),
+        termsVersion: "2020-01-01",
+      },
+    });
+
+    expect(missing.statusCode).toEqual(400);
+    expect(outdated.statusCode).toEqual(400);
   });
 
   it("should not be able to register an org without an address", async () => {
@@ -154,6 +222,7 @@ describe("Register Org Controller (e2e)", () => {
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
@@ -173,6 +242,7 @@ describe("Register Org Controller (e2e)", () => {
         city: "São Carlos",
         address: "Rua das Flores, 900",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
@@ -193,6 +263,7 @@ describe("Register Org Controller (e2e)", () => {
         city: "São Carlos",
         address: "Rua das Flores, 900",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
@@ -215,6 +286,7 @@ describe("Register Org Controller (e2e)", () => {
         city: "São Carlos",
         address: "Rua das Flores, 900",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 
@@ -239,6 +311,7 @@ describe("Register Org Controller (e2e)", () => {
         city: "São Carlos",
         address: "Rua das Flores, 900",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       },
     });
 

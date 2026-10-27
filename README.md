@@ -59,7 +59,12 @@ pet can update it.
 - Approving or rejecting an org deletes its documents from storage and
   the database; only the decision, its date and the rejection reason
   remain. A rejected org can upload new documents to be reviewed again.
-- Admins are the verified accounts whose email is in `ADMIN_EMAILS`.
+- Admins are the verified accounts whose email is in `ADMIN_EMAILS`.1
+- Signup requires accepting the Terms of Use and Privacy Polic1y: the
+  client sends `termsVersion`, which must equal `CURRENT_TERMS_VERSION`
+  (`src/utils/terms.ts`, kept in sync with the frontend's
+  `lib/legal.ts`), and the org stores that version and the acceptance
+  time as proof of consent. Bump both when the published text changes.
 - An org must always have an address and a WhatsApp number, stored as
   E.164 (`+5511989731163`). The client can send a bare Brazilian local
   number (`11989731163`), a formatted one (`(11) 98973-1163`), or one
@@ -304,6 +309,8 @@ status        OrgStatus (Pending | UnderReview | Approved | Rejected)
 cnpjCheck     Json? (BrasilAPI snapshot + flags, for the reviewer)
 rejectionReason String?
 reviewedAt    DateTime?
+termsVersion  String? (terms/privacy version accepted at signup)
+termsAcceptedAt DateTime?
 
 OrgDocument (deleted once the org is reviewed)
 ─────────────────
@@ -336,7 +343,7 @@ created_at    DateTime
 
 ## Testing
 
-The project has **260 automated tests** across **44 test files**, split into:
+The project has **262 automated tests** across **44 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge

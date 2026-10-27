@@ -1,3 +1,4 @@
+import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
 import { randomCnpj } from "@/test/random-cnpj";
 import { OrgRepository } from "@/repositories/org-repository";
@@ -27,6 +28,7 @@ describe("Authenticate Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
     });
     await orgRepository.markEmailAsVerified(org.id);
 
@@ -47,6 +49,7 @@ describe("Authenticate Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
     });
 
     await expect(() =>
@@ -75,6 +78,7 @@ describe("Authenticate Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
     });
 
     await expect(() =>
@@ -94,6 +98,7 @@ describe("Authenticate Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
     });
     await orgRepository.markEmailAsVerified(org.id);
 

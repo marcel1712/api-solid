@@ -1,3 +1,4 @@
+import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
 import { randomCnpj } from "@/test/random-cnpj";
 import { PetRepository } from "../repositories/pet-repository";
@@ -23,6 +24,7 @@ async function createOrg() {
     city: "São Paulo",
     address: "Rua das Flores, 123",
     cnpj: randomCnpj(),
+    termsVersion: CURRENT_TERMS_VERSION,
   });
 
   return org;

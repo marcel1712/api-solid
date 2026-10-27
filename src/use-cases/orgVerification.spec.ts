@@ -1,3 +1,4 @@
+import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryOrgRepository } from "@/repositories/in-memory/in-memory-org-repository";
 import { InMemoryOrgDocumentRepository } from "@/repositories/in-memory/in-memory-org-document-repository";
@@ -32,6 +33,7 @@ function signup(cnpj = randomCnpj()) {
     city: "São Paulo",
     address: "Rua das Flores, 123",
     cnpj,
+    termsVersion: CURRENT_TERMS_VERSION,
   });
 }
 

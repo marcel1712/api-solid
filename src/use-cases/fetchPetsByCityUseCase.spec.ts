@@ -1,3 +1,4 @@
+import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
 import { randomCnpj } from "@/test/random-cnpj";
 import { describe, it, beforeEach, expect } from "vitest";
@@ -27,6 +28,7 @@ async function createOrg(overrides: Partial<Parameters<RegisterOrgUseCase["execu
     city: "São Paulo",
     address: "Rua das Flores, 123",
     cnpj: randomCnpj(),
+    termsVersion: CURRENT_TERMS_VERSION,
     ...overrides,
   });
 

@@ -5,6 +5,7 @@ import { makeSendEmailVerificationUseCase } from "@/use-cases/factories/make-sen
 import { normalizeWhatsapp } from "@/utils/normalize-whatsapp";
 import { isValidCnpj, normalizeCnpj } from "@/utils/cnpj";
 import { toOwnOrg } from "@/http/utils/org-views";
+import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 
 export async function registerOrgController(
   request: FastifyRequest,
@@ -24,9 +25,12 @@ export async function registerOrgController(
       .string()
       .transform(normalizeCnpj)
       .refine(isValidCnpj, "Invalid CNPJ"),
+    // Consent has to be given to the text that's live now: a page opened
+    // before an update would send the old version and be turned away.
+    termsVersion: z.literal(CURRENT_TERMS_VERSION),
   });
 
-  const { name, email, password, whatsapp, city, address, cnpj } =
+  const { name, email, password, whatsapp, city, address, cnpj, termsVersion } =
     createOrgBodyScheme.parse(request.body);
 
   const registerOrgUseCase = makeRegisterOrgUseCase();
@@ -39,6 +43,7 @@ export async function registerOrgController(
     city,
     address,
     cnpj,
+    termsVersion,
   });
 
   try {

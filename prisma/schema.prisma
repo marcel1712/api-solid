@@ -30,6 +30,10 @@ model Org{
   cnpjCheck Json?
   rejectionReason String?
   reviewedAt DateTime?
+  // Proof of consent (LGPD art. 8): which version of the terms and privacy
+  // policy the org accepted at signup, and when.
+  termsVersion String?
+  termsAcceptedAt DateTime?
   documents OrgDocument[]
   pets Pet[]
   passwordResetTokens PasswordResetToken[]

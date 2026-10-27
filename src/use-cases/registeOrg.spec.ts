@@ -1,3 +1,4 @@
+import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
 import { randomCnpj } from "@/test/random-cnpj";
 import { OrgRepository } from "../repositories/org-repository";
@@ -23,6 +24,7 @@ describe("Register Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
     });
 
     expect(org.id).toEqual(expect.any(String));
@@ -37,6 +39,7 @@ describe("Register Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
     });
 
     expect(org.password_hash).not.toEqual("password123");
@@ -52,6 +55,7 @@ describe("Register Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
     });
 
     await expect(() =>
@@ -63,6 +67,7 @@ describe("Register Org Use Case", () => {
         city: "Rio de Janeiro",
         address: "Rua das Palmeiras, 456",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
       }),
     ).rejects.toThrow();
   });
@@ -76,6 +81,7 @@ describe("Register Org Use Case", () => {
       city: "São Paulo",
       address: "Rua das Flores, 123",
       cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
     });
 
     expect(org.id).toMatch(

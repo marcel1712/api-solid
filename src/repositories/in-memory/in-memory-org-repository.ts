@@ -104,6 +104,8 @@ export class InMemoryOrgRepository implements OrgRepository {
       cnpjCheck: (data.cnpjCheck as Prisma.JsonValue | undefined) ?? null,
       rejectionReason: null,
       reviewedAt: null,
+      termsVersion: data.termsVersion ?? null,
+      termsAcceptedAt: (data.termsAcceptedAt as Date | undefined) ?? null,
     };
 
     this.items.push(org);

@@ -15,6 +15,8 @@ interface RegisterOrgRequest {
   address: string;
   /** Digits only, already checksum-validated by the controller. */
   cnpj: string;
+  /** The terms version the org accepted; the controller only lets the current one in. */
+  termsVersion: string;
 }
 
 interface CreatedOrgResponse {
@@ -62,6 +64,8 @@ export class RegisterOrgUseCase {
       city: request.city,
       address: request.address,
       cnpj: request.cnpj,
+      termsVersion: request.termsVersion,
+      termsAcceptedAt: new Date(),
       cnpjCheck: record
         ? (buildCnpjCheck(record, request.city) as unknown as Prisma.InputJsonValue)
         : undefined,
