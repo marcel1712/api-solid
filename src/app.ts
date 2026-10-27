@@ -27,6 +27,10 @@ const app = Fastify({
 app.get("/", async function handler() {
   return "Findafriend";
 });
+// TEMP: forces a real 500 to confirm Sentry receives it, remove after testing
+app.get("/debug-sentry-test", async function handler() {
+  throw new Error("Tailhop Sentry test error");
+});
 // The API only ever answers JSON, so nothing it serves should be framed,
 // sniffed or allowed to run a script.
 app.register(fastifyHelmet, {
