@@ -121,4 +121,8 @@ export class PrismaOrgRepository implements OrgRepository {
       data: { emailVerifiedAt: new Date() },
     });
   }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.org.delete({ where: { id } });
+  }
 }

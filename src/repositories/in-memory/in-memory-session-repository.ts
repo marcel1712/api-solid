@@ -60,4 +60,8 @@ export class InMemorySessionRepository implements SessionRepository {
       }
     }
   }
+
+  async deleteManyByOrgId(orgId: string): Promise<void> {
+    this.items = this.items.filter((item) => item.orgId !== orgId);
+  }
 }

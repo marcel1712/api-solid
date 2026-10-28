@@ -9,6 +9,7 @@ import { InvalidOrExpiredTokenError } from "@/use-cases/errors/invalid-or-expire
 import { EmailNotVerifiedError } from "@/use-cases/errors/email-not-verified-error";
 import { InvalidSessionError } from "@/use-cases/errors/invalid-session-error";
 import { CnpjNotFoundError } from "@/use-cases/errors/cnpj-not-found-error";
+import { RegistrationBlockedError } from "@/use-cases/errors/registration-blocked-error";
 import { reportError } from "@/lib/monitoring";
 
 export function errorHandler(
@@ -53,6 +54,10 @@ export function errorHandler(
     return reply
       .status(422)
       .send({ message: error.message, code: "CNPJ_NOT_FOUND" });
+  }
+
+  if (error instanceof RegistrationBlockedError) {
+    return reply.status(403).send({ message: error.message });
   }
 
   if (error instanceof InvalidSessionError) {

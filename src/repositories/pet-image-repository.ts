@@ -13,4 +13,5 @@ export interface PetImageRepository {
   findManyByPetIds(petIds: string[]): Promise<PetImage[]>;
   countByPetId(petId: string): Promise<number>;
   delete(id: string): Promise<void>;
+  deleteManyByPetIds(petIds: string[]): Promise<void>;
 }

@@ -21,7 +21,10 @@ export interface PetRepository {
   ): Promise<Pet[]>;
   findById(id: string): Promise<Pet | null>;
   findManyByOrgId(orgId: string, page: number): Promise<Pet[]>;
+  /** Unpaginated: every pet belonging to the org, for cascade deletion. */
+  findAllByOrgId(orgId: string): Promise<Pet[]>;
   updateAdoptionStatus(id: string, adopted: boolean): Promise<Pet | null>;
   update(id: string, data: UpdatePetData): Promise<Pet | null>;
   create(data: Prisma.PetCreateInput): Promise<Pet>;
+  deleteManyByOrgId(orgId: string): Promise<void>;
 }

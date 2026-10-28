@@ -109,6 +109,23 @@ model PetImage{
   created_at DateTime @default(now())
 }
 
+// An org deleted by an admin for bad-faith signup (stolen CNPJ, no
+// documents) has its row removed entirely, so nothing here references
+// orgId — this is what stops the same contact from registering again.
+model BlockedContact {
+  id String @id @default(uuid())
+  kind BlockedContactKind
+  value String
+  reason String?
+  created_at DateTime @default(now())
+  @@unique([kind, value])
+}
+
+enum BlockedContactKind {
+  Email
+  Whatsapp
+}
+
 enum OrgStatus {
   Pending
   UnderReview

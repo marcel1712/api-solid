@@ -32,4 +32,8 @@ export class PrismaPetImageRepository implements PetImageRepository {
   async delete(id: string): Promise<void> {
     await this.prisma.petImage.delete({ where: { id } });
   }
+
+  async deleteManyByPetIds(petIds: string[]): Promise<void> {
+    await this.prisma.petImage.deleteMany({ where: { petId: { in: petIds } } });
+  }
 }

@@ -23,6 +23,14 @@ export class PrismaPetRepository implements PetRepository {
     });
   }
 
+  async findAllByOrgId(orgId: string): Promise<Pet[]> {
+    return this.prisma.pet.findMany({ where: { orgId } });
+  }
+
+  async deleteManyByOrgId(orgId: string): Promise<void> {
+    await this.prisma.pet.deleteMany({ where: { orgId } });
+  }
+
   async findManyByOrgIds(
     orgs: Org[],
     page: number,

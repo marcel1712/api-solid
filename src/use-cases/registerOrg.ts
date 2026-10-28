@@ -1,8 +1,10 @@
 import { OrgRepository } from "@/repositories/org-repository";
+import { BlockedContactRepository } from "@/repositories/blocked-contact-repository";
 import { Org, Prisma } from "@prisma/client";
 import { hash } from "bcrypt";
 import { ResourceAlreadyExistsError } from "@/use-cases/errors/resource-already-exists-error";
 import { CnpjNotFoundError } from "@/use-cases/errors/cnpj-not-found-error";
+import { RegistrationBlockedError } from "@/use-cases/errors/registration-blocked-error";
 import { CnpjLookup, CnpjRecord } from "@/lib/cnpj-lookup";
 import { buildCnpjCheck } from "@/utils/cnpj-check";
 
@@ -27,9 +29,18 @@ export class RegisterOrgUseCase {
   constructor(
     private OrgRepository: OrgRepository,
     private cnpjLookup: CnpjLookup,
+    private blockedContactRepository: BlockedContactRepository,
   ) {}
 
   async execute(request: RegisterOrgRequest): Promise<CreatedOrgResponse> {
+    const blocked = await this.blockedContactRepository.existsEmailOrWhatsapp(
+      request.email,
+      request.whatsapp,
+    );
+    if (blocked) {
+      throw new RegistrationBlockedError();
+    }
+
     const emailExist = await this.OrgRepository.findByEmail(request.email);
     if (emailExist) {
       throw new ResourceAlreadyExistsError("This email is already registered");

@@ -88,6 +88,10 @@ export class InMemoryOrgRepository implements OrgRepository {
     org.emailVerifiedAt = new Date();
   }
 
+  async delete(id: string): Promise<void> {
+    this.items = this.items.filter((item) => item.id !== id);
+  }
+
   async create(data: Prisma.OrgCreateInput) {
     const org: Org = {
       id: randomUUID(),

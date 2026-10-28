@@ -46,4 +46,8 @@ export class PrismaSessionRepository implements SessionRepository {
       data: { revokedAt: new Date() },
     });
   }
+
+  async deleteManyByOrgId(orgId: string): Promise<void> {
+    await this.prisma.session.deleteMany({ where: { orgId } });
+  }
 }

@@ -6,6 +6,7 @@ import { PetRepository } from "../repositories/pet-repository";
 import { OrgRepository } from "../repositories/org-repository";
 import { InMemoryPetRepository } from "../repositories/in-memory/in-memory-pet-repository";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
+import { InMemoryBlockedContactRepository } from "../repositories/in-memory/in-memory-blocked-contact-repository";
 import { InMemoryPetImageRepository } from "../repositories/in-memory/in-memory-pet-image-repository";
 import { PetImageRepository } from "../repositories/pet-image-repository";
 import { RegisterOrgUseCase } from "./registerOrg";
@@ -59,7 +60,11 @@ describe("Fetch Pet By City Use Case", () => {
   beforeEach(() => {
     petRepository = new InMemoryPetRepository();
     orgRepository = new InMemoryOrgRepository();
-    registerOrgUseCase = new RegisterOrgUseCase(orgRepository, new FakeCnpjLookup());
+    registerOrgUseCase = new RegisterOrgUseCase(
+      orgRepository,
+      new FakeCnpjLookup(),
+      new InMemoryBlockedContactRepository(),
+    );
     registerPetUseCase = new RegisterPetUseCase(petRepository, orgRepository);
     petImageRepository = new InMemoryPetImageRepository();
     sut = new FetchPetByCityUseCase(petRepository, orgRepository, petImageRepository);

@@ -7,6 +7,7 @@ import { RegisterPetUseCase } from "./registerPet";
 import { InMemoryPetRepository } from "../repositories/in-memory/in-memory-pet-repository";
 import { OrgRepository } from "../repositories/org-repository";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
+import { InMemoryBlockedContactRepository } from "../repositories/in-memory/in-memory-blocked-contact-repository";
 import { RegisterOrgUseCase } from "./registerOrg";
 import { ResourceNotFoundError } from "./errors/resource-not-found-error";
 
@@ -34,7 +35,11 @@ describe("Register Pet Use Case", () => {
   beforeEach(() => {
     petRepository = new InMemoryPetRepository();
     orgRepository = new InMemoryOrgRepository();
-    registerOrgUseCase = new RegisterOrgUseCase(orgRepository, new FakeCnpjLookup());
+    registerOrgUseCase = new RegisterOrgUseCase(
+      orgRepository,
+      new FakeCnpjLookup(),
+      new InMemoryBlockedContactRepository(),
+    );
     sut = new RegisterPetUseCase(petRepository, orgRepository);
   });
 

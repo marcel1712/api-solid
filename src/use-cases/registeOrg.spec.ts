@@ -3,16 +3,23 @@ import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
 import { randomCnpj } from "@/test/random-cnpj";
 import { OrgRepository } from "../repositories/org-repository";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
+import { InMemoryBlockedContactRepository } from "../repositories/in-memory/in-memory-blocked-contact-repository";
 import { RegisterOrgUseCase } from "./registerOrg";
 import { describe, it, expect, beforeEach } from "vitest";
 
 let orgRepository: OrgRepository;
+let blockedContactRepository: InMemoryBlockedContactRepository;
 let sut: RegisterOrgUseCase;
 
 describe("Register Org Use Case", () => {
   beforeEach(() => {
     orgRepository = new InMemoryOrgRepository();
-    sut = new RegisterOrgUseCase(orgRepository, new FakeCnpjLookup());
+    blockedContactRepository = new InMemoryBlockedContactRepository();
+    sut = new RegisterOrgUseCase(
+      orgRepository,
+      new FakeCnpjLookup(),
+      blockedContactRepository,
+    );
   });
 
   it("should be able to register a new org", async () => {
@@ -87,5 +94,41 @@ describe("Register Org Use Case", () => {
     expect(org.id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
+  });
+
+  it("should not allow registering with a blocked email", async () => {
+    const email = "blocked@email.com";
+    await blockedContactRepository.create({ kind: "Email", value: email });
+
+    await expect(() =>
+      sut.execute({
+        name: "Pet Friends ",
+        email,
+        password: "password123",
+        whatsapp: "11999999999",
+        city: "São Paulo",
+        address: "Rua das Flores, 123",
+        cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("should not allow registering with a blocked WhatsApp number", async () => {
+    const whatsapp = "11777777777";
+    await blockedContactRepository.create({ kind: "Whatsapp", value: whatsapp });
+
+    await expect(() =>
+      sut.execute({
+        name: "Pet Friends ",
+        email: "newemail@email.com",
+        password: "password123",
+        whatsapp,
+        city: "São Paulo",
+        address: "Rua das Flores, 123",
+        cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
+      }),
+    ).rejects.toThrow();
   });
 });

@@ -1,6 +1,7 @@
 import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryOrgRepository } from "@/repositories/in-memory/in-memory-org-repository";
+import { InMemoryBlockedContactRepository } from "@/repositories/in-memory/in-memory-blocked-contact-repository";
 import { InMemoryOrgDocumentRepository } from "@/repositories/in-memory/in-memory-org-document-repository";
 import { FakeCnpjLookup } from "@/test/fake-cnpj-lookup";
 import { FakeDocumentStorage } from "@/test/fake-document-storage";
@@ -54,7 +55,11 @@ describe("Org verification", () => {
     documentRepository = new InMemoryOrgDocumentRepository();
     cnpjLookup = new FakeCnpjLookup();
     storage = new FakeDocumentStorage();
-    register = new RegisterOrgUseCase(orgRepository, cnpjLookup);
+    register = new RegisterOrgUseCase(
+      orgRepository,
+      cnpjLookup,
+      new InMemoryBlockedContactRepository(),
+    );
     requestUpload = new RequestOrgDocumentUploadUseCase(orgRepository, storage);
     confirmUpload = new ConfirmOrgDocumentUploadUseCase(
       orgRepository,

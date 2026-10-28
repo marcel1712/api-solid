@@ -28,4 +28,5 @@ export interface OrgRepository {
   updateStatus(id: string, status: OrgStatus): Promise<void>;
   saveReview(id: string, review: OrgReview): Promise<void>;
   saveCnpjCheck(id: string, check: CnpjCheck): Promise<void>;
+  delete(id: string): Promise<void>;
 }

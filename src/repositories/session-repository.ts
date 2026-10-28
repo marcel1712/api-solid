@@ -15,4 +15,5 @@ export interface SessionRepository {
   revokeAllByOrgId(orgId: string): Promise<void>;
   /** Removes sessions that expired before `date`; returns how many. */
   deleteExpiredBefore(date: Date): Promise<number>;
+  deleteManyByOrgId(orgId: string): Promise<void>;
 }

@@ -43,6 +43,14 @@ export class InMemoryPetRepository implements PetRepository {
     return pets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   }
 
+  async findAllByOrgId(orgId: string): Promise<Pet[]> {
+    return this.items.filter((pet) => pet.orgId === orgId);
+  }
+
+  async deleteManyByOrgId(orgId: string): Promise<void> {
+    this.items = this.items.filter((pet) => pet.orgId !== orgId);
+  }
+
   async updateAdoptionStatus(
     id: string,
     adopted: boolean,

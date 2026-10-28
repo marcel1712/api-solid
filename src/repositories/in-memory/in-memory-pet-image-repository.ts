@@ -41,4 +41,8 @@ export class InMemoryPetImageRepository implements PetImageRepository {
   async delete(id: string): Promise<void> {
     this.items = this.items.filter((item) => item.id !== id);
   }
+
+  async deleteManyByPetIds(petIds: string[]): Promise<void> {
+    this.items = this.items.filter((item) => !petIds.includes(item.petId));
+  }
 }

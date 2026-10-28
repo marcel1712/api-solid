@@ -266,6 +266,7 @@ Admin routes (signed in with an account listed in `ADMIN_EMAILS`):
 | `GET`   | `/admin/orgs?status=`        | Orgs in a status (default `UnderReview`), with their CNPJ check and 10-minute download links to their documents |
 | `POST`  | `/admin/orgs/:id/review`     | `{ "decision": "approve" }` or `{ "decision": "reject", "reason": "..." }`; deletes the documents and emails the org |
 | `POST`  | `/admin/orgs/:id/cnpj-check` | Re-run the BrasilAPI lookup |
+| `DELETE`| `/admin/orgs/:id`            | `{ "reason": "..." }` (10-1000 chars); deletes the org, its pets/documents/sessions/tokens (and their R2 files), and blocks its email and WhatsApp from registering again |
 
 **Example — search**: `GET /pets/search?city=São Paulo&page=1&size=Small&type=Dog&ageMin=0&ageMax=2`
 
@@ -355,11 +356,19 @@ created_at    DateTime
                               created_at    DateTime
 
 1 ── * (an org has many pets)      1 ── * (a pet has up to 3 images)
+
+BlockedContact (no FK to Org — the org it came from is deleted)
+─────────────────
+id            String (PK)
+kind          BlockedContactKind (Email | Whatsapp)
+value         String, unique per kind
+reason        String?
+created_at    DateTime
 ```
 
 ## Testing
 
-The project has **267 automated tests** across **46 test files**, split into:
+The project has **272 automated tests** across **47 test files**, split into:
 
 - **Unit tests** for every use case, running against the in-memory
   repositories — fast, no database required, cover business rules and edge

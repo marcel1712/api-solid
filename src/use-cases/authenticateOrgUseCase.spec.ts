@@ -5,6 +5,7 @@ import { OrgRepository } from "@/repositories/org-repository";
 import { describe, it, expect, beforeEach } from "vitest";
 import { AuthenticateOrgUseCase } from "../use-cases/authenticateOrgUseCase";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
+import { InMemoryBlockedContactRepository } from "../repositories/in-memory/in-memory-blocked-contact-repository";
 import { RegisterOrgUseCase } from "./registerOrg";
 import { EmailNotVerifiedError } from "./errors/email-not-verified-error";
 
@@ -15,7 +16,11 @@ let sut: AuthenticateOrgUseCase;
 describe("Authenticate Org Use Case", () => {
   beforeEach(() => {
     orgRepository = new InMemoryOrgRepository();
-    registerUseCase = new RegisterOrgUseCase(orgRepository, new FakeCnpjLookup());
+    registerUseCase = new RegisterOrgUseCase(
+      orgRepository,
+      new FakeCnpjLookup(),
+      new InMemoryBlockedContactRepository(),
+    );
     sut = new AuthenticateOrgUseCase(orgRepository);
   });
 
