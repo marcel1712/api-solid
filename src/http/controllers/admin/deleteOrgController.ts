@@ -7,18 +7,19 @@ export async function deleteOrgController(
   reply: FastifyReply,
 ) {
   const paramsSchema = z.object({ id: z.uuid() });
-  // Required: this both audits the decision and becomes the reason stored
-  // on the block-list entries that stop the same contact from signing up
-  // again.
+  // Reason is always required for the audit trail, whether or not it ends
+  // up on a block-list entry. `block` defaults to true (bad-faith signup);
+  // an admin removing an org at its own request sets it to false.
   const bodySchema = z.object({
     reason: z.string().trim().min(10).max(1000),
+    block: z.boolean().default(true),
   });
 
   const { id } = paramsSchema.parse(request.params);
-  const { reason } = bodySchema.parse(request.body);
+  const { reason, block } = bodySchema.parse(request.body);
 
   const useCase = makeDeleteOrgUseCase();
-  await useCase.execute({ orgId: id, reason });
+  await useCase.execute({ orgId: id, reason, block });
 
   return reply.status(204).send();
 }

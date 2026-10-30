@@ -105,7 +105,11 @@ describe("Delete Org Use Case", () => {
       expiresAt: new Date(Date.now() + 1000 * 60),
     });
 
-    await sut.execute({ orgId: org.id, reason: "Fake CNPJ, no documents" });
+    await sut.execute({
+      orgId: org.id,
+      reason: "Fake CNPJ, no documents",
+      block: true,
+    });
 
     expect(orgRepository.items).toHaveLength(0);
     expect(orgDocumentRepository.items).toHaveLength(0);
@@ -121,7 +125,11 @@ describe("Delete Org Use Case", () => {
   it("should block the org's email and WhatsApp from registering again", async () => {
     const org = await createOrg();
 
-    await sut.execute({ orgId: org.id, reason: "Fake CNPJ, no documents" });
+    await sut.execute({
+      orgId: org.id,
+      reason: "Fake CNPJ, no documents",
+      block: true,
+    });
 
     await expect(
       blockedContactRepository.existsEmailOrWhatsapp(
@@ -131,9 +139,30 @@ describe("Delete Org Use Case", () => {
     ).resolves.toBe(true);
   });
 
+  it("should not block the contact when block is false", async () => {
+    const org = await createOrg();
+
+    await sut.execute({
+      orgId: org.id,
+      reason: "Removed at the org's own request",
+      block: false,
+    });
+
+    await expect(
+      blockedContactRepository.existsEmailOrWhatsapp(
+        org.email,
+        org.whatsapp,
+      ),
+    ).resolves.toBe(false);
+  });
+
   it("should not be able to delete a non-existing org", async () => {
     await expect(() =>
-      sut.execute({ orgId: "non-existing-org-id", reason: "test reason" }),
+      sut.execute({
+        orgId: "non-existing-org-id",
+        reason: "test reason",
+        block: true,
+      }),
     ).rejects.toBeInstanceOf(ResourceNotFoundError);
   });
 });

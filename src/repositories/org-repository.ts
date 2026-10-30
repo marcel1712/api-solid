@@ -3,9 +3,12 @@ import { CnpjCheck } from "@/utils/cnpj-check";
 
 export interface UpdateOrgData {
   name?: string;
+  email?: string;
   whatsapp?: string;
   city?: string;
   address?: string;
+  /** Set alongside `email` when an admin changes it: the org re-proves it. */
+  emailVerifiedAt?: Date | null;
 }
 
 export interface OrgReview {

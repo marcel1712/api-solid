@@ -101,7 +101,7 @@ export class PrismaOrgRepository implements OrgRepository {
       }
       if (isUniqueViolation(error)) {
         throw new ResourceAlreadyExistsError(
-          "This WhatsApp is already registered",
+          "This email or WhatsApp is already registered",
         );
       }
       throw error;

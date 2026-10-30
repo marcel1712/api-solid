@@ -320,5 +320,85 @@ describe("Org verification (e2e)", () => {
         }),
       );
     });
+
+    it("should let an admin fix an org's own data", async () => {
+      await app.ready();
+
+      const token = await adminToken();
+      const org = await pendingOrg();
+
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/admin/orgs/${org.id}`,
+        headers: { authorization: `Bearer ${token}` },
+        payload: { city: "Araraquara" },
+      });
+
+      expect(response.statusCode).toEqual(200);
+      expect(response.json().city).toEqual("Araraquara");
+    });
+
+    it("should reset verification when an admin fixes the org's email", async () => {
+      await app.ready();
+
+      const token = await adminToken();
+      const org = await pendingOrg();
+      const newEmail = `${randomUUID()}@email.com`;
+
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/admin/orgs/${org.id}`,
+        headers: { authorization: `Bearer ${token}` },
+        payload: { email: newEmail },
+      });
+
+      expect(response.statusCode).toEqual(200);
+      expect(response.json().email).toEqual(newEmail);
+
+      const login = await app.inject({
+        method: "POST",
+        url: "/orgs/sessions",
+        payload: { email: newEmail, password: "password123" },
+      });
+      expect(login.statusCode).toEqual(403);
+    });
+
+    it("should delete an org without blocking its contact, when asked", async () => {
+      await app.ready();
+
+      const token = await adminToken();
+      const org = await pendingOrg();
+
+      const response = await app.inject({
+        method: "DELETE",
+        url: `/admin/orgs/${org.id}`,
+        headers: { authorization: `Bearer ${token}` },
+        payload: { reason: "The org asked to be removed", block: false },
+      });
+
+      expect(response.statusCode).toEqual(204);
+
+      const signupAgain = await signup({ email: org.email, whatsapp: org.whatsapp });
+      expect(signupAgain.statusCode).toEqual(201);
+    });
+
+    it("should delete an org and block its contact by default", async () => {
+      await app.ready();
+
+      const token = await adminToken();
+      const org = await pendingOrg();
+
+      const response = await app.inject({
+        method: "DELETE",
+        url: `/admin/orgs/${org.id}`,
+        headers: { authorization: `Bearer ${token}` },
+        payload: { reason: "Stolen CNPJ, no documents" },
+      });
+
+      expect(response.statusCode).toEqual(204);
+
+      const signupAgain = await signup({ email: org.email, whatsapp: org.whatsapp });
+      expect(signupAgain.statusCode).toEqual(403);
+    });
   });
 });

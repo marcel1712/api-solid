@@ -63,9 +63,13 @@ export class InMemoryOrgRepository implements OrgRepository {
     }
 
     if (data.name !== undefined) org.name = data.name;
+    if (data.email !== undefined) org.email = data.email;
     if (data.whatsapp !== undefined) org.whatsapp = data.whatsapp;
     if (data.city !== undefined) org.city = data.city;
     if (data.address !== undefined) org.address = data.address;
+    if (data.emailVerifiedAt !== undefined) {
+      org.emailVerifiedAt = data.emailVerifiedAt;
+    }
 
     return org;
   }

@@ -28,6 +28,7 @@ import { listOrgsForReviewController } from "./controllers/admin/listOrgsForRevi
 import { reviewOrgController } from "./controllers/admin/reviewOrgController";
 import { recheckOrgCnpjController } from "./controllers/admin/recheckOrgCnpjController";
 import { deleteOrgController } from "./controllers/admin/deleteOrgController";
+import { adminUpdateOrgController } from "./controllers/admin/updateOrgController";
 
 export async function orgRoutes(app: FastifyInstance) {
   app.post(
@@ -114,5 +115,6 @@ export async function adminRoutes(app: FastifyInstance) {
   app.get("/orgs", listOrgsForReviewController);
   app.post("/orgs/:id/review", reviewOrgController);
   app.post("/orgs/:id/cnpj-check", recheckOrgCnpjController);
+  app.patch("/orgs/:id", adminUpdateOrgController);
   app.delete("/orgs/:id", deleteOrgController);
 }

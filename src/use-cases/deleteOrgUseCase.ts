@@ -15,8 +15,14 @@ import env from "@/env/env";
 
 interface DeleteOrgRequest {
   orgId: string;
-  /** Recorded on the block-list entries, for an audit trail. */
+  /** Recorded on the block-list entries (when `block` is true), for an audit trail. */
   reason: string;
+  /**
+   * False for a plain removal — the org itself asked to be deleted, or it
+   * was a duplicate/mistake. True (the default) also stops its email and
+   * WhatsApp from registering again, for bad-faith signups.
+   */
+  block: boolean;
 }
 
 export class DeleteOrgUseCase {
@@ -63,19 +69,21 @@ export class DeleteOrgUseCase {
     await this.passwordResetTokenRepository.deleteManyByOrgId(org.id);
     await this.emailVerificationTokenRepository.deleteManyByOrgId(org.id);
 
-    // The point of deleting is to stop this org from existing *and* to stop
-    // whoever ran it from signing up again under the same contact details —
-    // deleting the row alone would free the email/WhatsApp for reuse.
-    await this.blockedContactRepository.create({
-      kind: BlockedContactKind.Email,
-      value: org.email,
-      reason: request.reason,
-    });
-    await this.blockedContactRepository.create({
-      kind: BlockedContactKind.Whatsapp,
-      value: org.whatsapp,
-      reason: request.reason,
-    });
+    // Blocking stops whoever ran a bad-faith signup from registering again
+    // under the same contact details — but a legitimate org asking to be
+    // removed should be free to sign up again later, so this is opt-in.
+    if (request.block) {
+      await this.blockedContactRepository.create({
+        kind: BlockedContactKind.Email,
+        value: org.email,
+        reason: request.reason,
+      });
+      await this.blockedContactRepository.create({
+        kind: BlockedContactKind.Whatsapp,
+        value: org.whatsapp,
+        reason: request.reason,
+      });
+    }
 
     await this.orgRepository.delete(org.id);
   }
