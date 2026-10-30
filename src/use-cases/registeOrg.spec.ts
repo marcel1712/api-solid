@@ -9,17 +9,15 @@ import { describe, it, expect, beforeEach } from "vitest";
 
 let orgRepository: OrgRepository;
 let blockedContactRepository: InMemoryBlockedContactRepository;
+let cnpjLookup: FakeCnpjLookup;
 let sut: RegisterOrgUseCase;
 
 describe("Register Org Use Case", () => {
   beforeEach(() => {
     orgRepository = new InMemoryOrgRepository();
     blockedContactRepository = new InMemoryBlockedContactRepository();
-    sut = new RegisterOrgUseCase(
-      orgRepository,
-      new FakeCnpjLookup(),
-      blockedContactRepository,
-    );
+    cnpjLookup = new FakeCnpjLookup();
+    sut = new RegisterOrgUseCase(orgRepository, cnpjLookup, blockedContactRepository);
   });
 
   it("should be able to register a new org", async () => {
@@ -127,6 +125,24 @@ describe("Register Org Use Case", () => {
         city: "São Paulo",
         address: "Rua das Flores, 123",
         cnpj: randomCnpj(),
+        termsVersion: CURRENT_TERMS_VERSION,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("should not allow registering with a for-profit company's CNPJ", async () => {
+    const cnpj = randomCnpj();
+    cnpjLookup.forProfit.add(cnpj);
+
+    await expect(() =>
+      sut.execute({
+        name: "Jau Server",
+        email: "jauserver@email.com",
+        password: "password123",
+        whatsapp: "11999999999",
+        city: "São Paulo",
+        address: "Rua das Flores, 123",
+        cnpj,
         termsVersion: CURRENT_TERMS_VERSION,
       }),
     ).rejects.toThrow();

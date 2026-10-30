@@ -24,6 +24,10 @@ export interface CnpjCheck {
   } | null;
 }
 
+export function isNonProfitLegalNature(code: number): boolean {
+  return NON_PROFIT_LEGAL_NATURES.has(code);
+}
+
 function normalizeCity(city: string): string {
   return city
     .normalize("NFD")

@@ -4,9 +4,10 @@ import { Org, Prisma } from "@prisma/client";
 import { hash } from "bcrypt";
 import { ResourceAlreadyExistsError } from "@/use-cases/errors/resource-already-exists-error";
 import { CnpjNotFoundError } from "@/use-cases/errors/cnpj-not-found-error";
+import { CnpjNotEligibleError } from "@/use-cases/errors/cnpj-not-eligible-error";
 import { RegistrationBlockedError } from "@/use-cases/errors/registration-blocked-error";
 import { CnpjLookup, CnpjRecord } from "@/lib/cnpj-lookup";
-import { buildCnpjCheck } from "@/utils/cnpj-check";
+import { buildCnpjCheck, isNonProfitLegalNature } from "@/utils/cnpj-check";
 
 interface RegisterOrgRequest {
   name: string;
@@ -63,6 +64,13 @@ export class RegisterOrgUseCase {
 
     if (record === null) {
       throw new CnpjNotFoundError();
+    }
+
+    // The Receita doesn't know what an org does, but it does know whether
+    // it's a for-profit company — a software or hosting business can have a
+    // perfectly real, active CNPJ and still not be an eligible org.
+    if (record && !isNonProfitLegalNature(record.legalNatureCode)) {
+      throw new CnpjNotEligibleError();
     }
 
     const password_hash: string = await hash(request.password, 10);
