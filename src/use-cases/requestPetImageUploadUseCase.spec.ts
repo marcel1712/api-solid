@@ -1,4 +1,5 @@
 import { describe, it, beforeEach, expect, vi } from "vitest";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PetRepository } from "../repositories/pet-repository";
 import { PetImageRepository } from "../repositories/pet-image-repository";
 import { InMemoryPetRepository } from "../repositories/in-memory/in-memory-pet-repository";
@@ -45,11 +46,32 @@ describe("Request Pet Image Upload Use Case", () => {
       petId: pet.id,
       orgId: "org-01",
       contentType: "image/jpeg",
+      size: 1024,
     });
 
     expect(key).toContain(pet.id);
     expect(url).toContain(key);
     expect(uploadUrl).toEqual("https://r2.example.com/signed-upload-url");
+  });
+
+  it("should sign the type and size into the upload URL", async () => {
+    const pet = await createPet();
+
+    await sut.execute({
+      petId: pet.id,
+      orgId: "org-01",
+      contentType: "image/png",
+      size: 2048,
+    });
+
+    const [, command, options] = vi.mocked(getSignedUrl).mock.lastCall!;
+    expect((command as { input: unknown }).input).toMatchObject({
+      ContentType: "image/png",
+      ContentLength: 2048,
+    });
+    expect(options?.signableHeaders).toEqual(
+      new Set(["content-type", "content-length"]),
+    );
   });
 
   it("should not persist anything before the upload is confirmed", async () => {
@@ -59,6 +81,7 @@ describe("Request Pet Image Upload Use Case", () => {
       petId: pet.id,
       orgId: "org-01",
       contentType: "image/jpeg",
+      size: 1024,
     });
 
     expect(
@@ -72,6 +95,7 @@ describe("Request Pet Image Upload Use Case", () => {
         petId: "non-existing-pet-id",
         orgId: "org-01",
         contentType: "image/jpeg",
+      size: 1024,
       }),
     ).rejects.toBeInstanceOf(ResourceNotFoundError);
   });
@@ -84,6 +108,7 @@ describe("Request Pet Image Upload Use Case", () => {
         petId: pet.id,
         orgId: "org-02",
         contentType: "image/jpeg",
+      size: 1024,
       }),
     ).rejects.toBeInstanceOf(NotAllowedError);
   });
@@ -104,6 +129,7 @@ describe("Request Pet Image Upload Use Case", () => {
         petId: pet.id,
         orgId: "org-01",
         contentType: "image/jpeg",
+      size: 1024,
       }),
     ).rejects.toBeInstanceOf(LimitExceededError);
   });

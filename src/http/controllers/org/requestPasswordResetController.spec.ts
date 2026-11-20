@@ -26,7 +26,7 @@ async function createOrg() {
     payload: {
       name: "Pet Friends",
       email,
-      password: "password123",
+      password: "Patas!Felizes7",
       whatsapp: randomWhatsapp(),
       city: "São Carlos",
       address: "Rua das Flores, 900",

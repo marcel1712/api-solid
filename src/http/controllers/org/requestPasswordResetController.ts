@@ -1,13 +1,14 @@
 import { makeRequestPasswordResetUseCase } from "@/use-cases/factories/make-request-password-reset-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { emailSchema } from "@/http/utils/schemas";
 
 export async function requestPasswordResetController(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
   const requestPasswordResetBodyScheme = z.object({
-    email: z.string().email(),
+    email: emailSchema,
   });
 
   const { email } = requestPasswordResetBodyScheme.parse(request.body);

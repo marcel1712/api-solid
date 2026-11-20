@@ -6,10 +6,14 @@ import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
 import { errorHandler } from "@/http/error-handler";
 import env from "@/env/env";
+import { clientIp } from "@/http/utils/client-ip";
 
 // Logs go to stdout, which is what Render's log viewer reads. Off in tests to
 // keep the output readable.
 const app = Fastify({
+  // Every body this API takes is a small JSON form; files go straight to R2.
+  // The default (1 MB) only gave room to stuff fields.
+  bodyLimit: 64 * 1024,
   trustProxy: true,
   logger: env.NODE_ENV !== "test" && {
     serializers: {
@@ -18,7 +22,7 @@ const app = Fastify({
       req: (request: FastifyRequest) => ({
         method: request.method,
         url: request.url.split("?")[0],
-        ip: request.ip,
+        ip: clientIp(request),
       }),
     },
   },
@@ -44,6 +48,8 @@ if (env.NODE_ENV !== "test") {
     global: true,
     max: 100,
     timeWindow: "1 minute",
+    // Never `request.ip` here: see `clientIp`.
+    keyGenerator: clientIp,
     errorResponseBuilder: () => ({
       statusCode: 429,
       error: "Too Many Requests",

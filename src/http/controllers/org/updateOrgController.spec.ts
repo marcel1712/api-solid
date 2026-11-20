@@ -16,7 +16,7 @@ async function createOrg() {
     payload: {
       name: "Pet Friends",
       email: `${randomUUID()}@email.com`,
-      password: "password123",
+      password: "Patas!Felizes7",
       whatsapp: randomWhatsapp(),
       city: "São Carlos",
       address: "Rua das Flores, 900",
@@ -100,7 +100,7 @@ describe("Update Org Controller (e2e)", () => {
     const loginResponse = await app.inject({
       method: "POST",
       url: "/orgs/sessions",
-      payload: { email: org.email, password: "password123" },
+      payload: { email: org.email, password: "Patas!Felizes7" },
     });
 
     expect(loginResponse.statusCode).toEqual(200);

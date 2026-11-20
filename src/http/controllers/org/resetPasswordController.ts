@@ -1,6 +1,7 @@
 import { makeResetPasswordUseCase } from "@/use-cases/factories/make-reset-password-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { passwordSchema } from "@/utils/password-policy";
 
 export async function resetPasswordController(
   request: FastifyRequest,
@@ -8,7 +9,7 @@ export async function resetPasswordController(
 ) {
   const resetPasswordBodyScheme = z.object({
     token: z.string().min(1),
-    password: z.string().min(6),
+    password: passwordSchema,
   });
 
   const { token, password } = resetPasswordBodyScheme.parse(request.body);

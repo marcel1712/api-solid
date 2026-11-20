@@ -1,6 +1,11 @@
 import { makeUpdatePetUseCase } from "@/use-cases/factories/make-update-pet-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import {
+  petAgeSchema,
+  petBioSchema,
+  petNameSchema,
+} from "@/http/utils/schemas";
 
 export async function updatePetController(
   request: FastifyRequest,
@@ -11,8 +16,8 @@ export async function updatePetController(
   });
 
   const updatePetBodyScheme = z.object({
-    name: z.string().min(1).optional(),
-    age: z.int().optional(),
+    name: petNameSchema.optional(),
+    age: petAgeSchema.optional(),
     size: z.literal(["Small", "Medium", "Large"]).optional(),
     type: z.literal([
       "Dog",
@@ -25,7 +30,7 @@ export async function updatePetController(
       "Ferret",
       "Chinchilla",
     ]).optional(),
-    bio: z.string().optional(),
+    bio: petBioSchema.optional(),
   });
 
   const { id } = updatePetParamsScheme.parse(request.params);

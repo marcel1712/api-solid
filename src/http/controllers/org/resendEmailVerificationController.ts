@@ -1,13 +1,14 @@
 import { makeResendEmailVerificationUseCase } from "@/use-cases/factories/make-resend-email-verification-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { emailSchema } from "@/http/utils/schemas";
 
 export async function resendEmailVerificationController(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
   const resendEmailVerificationBodyScheme = z.object({
-    email: z.string().email(),
+    email: emailSchema,
   });
 
   const { email } = resendEmailVerificationBodyScheme.parse(request.body);

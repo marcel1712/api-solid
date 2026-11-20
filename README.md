@@ -224,9 +224,20 @@ Prisma / PostgreSQL   or   In-Memory (tests)
   /orgs/sessions` (5/minute, brute-force protection), `POST
   /orgs/sessions/refresh` (30/minute), and `POST
   /orgs/password/reset` (10/hour). Disabled when `NODE_ENV=test` so the
-  test suite isn't affected. Requires `trustProxy: true` (set on the
-  Fastify instance) to key limits by the real client IP behind Render's
-  proxy instead of the proxy's own IP.
+  test suite isn't affected. Limits are keyed by `CF-Connecting-IP`
+  (`src/http/utils/client-ip.ts`), which Cloudflare — in front of Render —
+  overwrites with the address that actually connected. Never by
+  `request.ip`: with `trustProxy` that's the leftmost `X-Forwarded-For`
+  entry, which the client writes, and a made-up value per request used to
+  get a fresh quota each time. Sign-in (10/15 min), password reset and
+  verification resend (3/hour each) are also capped **per email**, so
+  requests spread over many IPs still can't brute-force one account or
+  flood one inbox.
+- **Server-side input rules**: the signup/reset password policy
+  (`src/utils/password-policy.ts`, mirrored by the frontend) and field
+  length limits (`src/http/utils/schemas.ts`) are enforced by the API, not
+  just the form. Emails are trimmed and lower-cased on every route. Bodies
+  are capped at 64 KB.
 - Sensitive fields (`password_hash`) are always stripped before a response
   is sent, on every endpoint that returns org data.
 
@@ -274,12 +285,17 @@ Admin routes (signed in with an account listed in `ADMIN_EMAILS`):
 `age` is stored and returned in **years**. Already-adopted pets are excluded from search results automatically.
 
 **Image upload flow** (3 steps, nothing is persisted until step 3 succeeds):
-1. `POST /pets/:id/images` with `{ "contentType": "image/jpeg" }` (also
-   accepts `image/png`/`image/webp`) → returns `{ key, url, uploadUrl }`.
+1. `POST /pets/:id/images` with `{ "contentType": "image/jpeg", "size": <bytes> }`
+   (also accepts `image/png`/`image/webp`; at most 8 MB) → returns
+   `{ key, url, uploadUrl }`.
 2. The client `PUT`s the raw file bytes directly to `uploadUrl` (valid for
-   5 minutes) — the file never touches the API server.
+   5 minutes) — the file never touches the API server. Type and size are
+   part of the signature: R2 refuses any other `Content-Type` or length.
+   The bucket is public, so without this anyone signed in could host an
+   HTML page or an SVG with a script under it.
 3. `POST /pets/:id/images/confirm` with `{ "key": "<key from step 1>" }` →
-   the backend checks the object actually exists in R2 and only then
+   the backend checks the object exists in R2 with an image type and an
+   allowed size (otherwise it deletes it and answers `403`), and only then
    creates the `PetImage` row, returning it (including its `id` and `url`).
 
 **Password reset flow**:

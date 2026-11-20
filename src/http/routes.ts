@@ -21,6 +21,7 @@ import { deletePetImageController } from "./controllers/pet/deletePetImageContro
 import { verifyJwt } from "./middlewares/verify-jwt";
 import { readOptionalJwt } from "./middlewares/read-optional-jwt";
 import { verifyAdmin } from "./middlewares/verify-admin";
+import { limitPerEmail } from "./utils/client-ip";
 import { getOwnOrgController } from "./controllers/org/getOwnOrgController";
 import { requestOrgDocumentUploadController } from "./controllers/org/requestOrgDocumentUploadController";
 import { confirmOrgDocumentUploadController } from "./controllers/org/confirmOrgDocumentUploadController";
@@ -38,7 +39,14 @@ export async function orgRoutes(app: FastifyInstance) {
   );
   app.post(
     "/sessions",
-    { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+    {
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+      preHandler: limitPerEmail(app, {
+        group: "sign-in",
+        max: 10,
+        timeWindow: "15 minutes",
+      }),
+    },
     authenticateOrgController,
   );
   app.post(
@@ -66,7 +74,14 @@ export async function orgRoutes(app: FastifyInstance) {
   );
   app.post(
     "/password/forgot",
-    { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
+    {
+      config: { rateLimit: { max: 5, timeWindow: "1 hour" } },
+      preHandler: limitPerEmail(app, {
+        group: "password-reset",
+        max: 3,
+        timeWindow: "1 hour",
+      }),
+    },
     requestPasswordResetController,
   );
   app.post(
@@ -81,7 +96,14 @@ export async function orgRoutes(app: FastifyInstance) {
   );
   app.post(
     "/verify-email/resend",
-    { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
+    {
+      config: { rateLimit: { max: 5, timeWindow: "1 hour" } },
+      preHandler: limitPerEmail(app, {
+        group: "verify-resend",
+        max: 3,
+        timeWindow: "1 hour",
+      }),
+    },
     resendEmailVerificationController,
   );
 }

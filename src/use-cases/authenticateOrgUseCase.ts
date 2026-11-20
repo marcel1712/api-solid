@@ -9,6 +9,13 @@ interface AuthenticateOrgRequest {
   password: string;
 }
 
+// Hash of a random string nobody knows, at the same cost as real ones.
+// Comparing against it when the email has no account makes that answer take
+// as long as a wrong password — otherwise the response time alone would tell
+// which emails are registered.
+const DUMMY_PASSWORD_HASH =
+  "$2b$10$m5yn9hhO5yqvexaHx8OrzufcjJ3c1LXs6OwYtU0y7L85IRxPCRfSO";
+
 type OrgPreview = Omit<Org, "password_hash" | "created_at">;
 
 interface AuthenticatedOrg {
@@ -23,6 +30,7 @@ export class AuthenticateOrgUseCase {
     const org = await this.orgRepository.findByEmail(request.email);
 
     if (!org) {
+      await compare(request.password, DUMMY_PASSWORD_HASH);
       throw new InvalidCredentialsError();
     }
 

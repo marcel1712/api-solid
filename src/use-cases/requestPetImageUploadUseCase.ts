@@ -12,10 +12,22 @@ import env from "@/env/env";
 const MAX_IMAGES_PER_PET = 3;
 const UPLOAD_URL_EXPIRES_IN_SECONDS = 5 * 60;
 
+// The bucket is public: whatever lands in it is served to anyone, under the
+// type it was uploaded with. Only images, and only up to what a phone photo
+// needs (the client caps files at the same size).
+export const PET_IMAGE_CONTENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
+export type PetImageContentType = (typeof PET_IMAGE_CONTENT_TYPES)[number];
+export const MAX_PET_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
+
 interface RequestPetImageUploadRequest {
   petId: string;
   orgId: string;
-  contentType: string;
+  contentType: PetImageContentType;
+  size: number;
 }
 
 interface RequestPetImageUploadResponse {
@@ -63,8 +75,15 @@ export class RequestPetImageUploadUseCase {
         Bucket: env.R2_BUCKET_NAME,
         Key: key,
         ContentType: request.contentType,
+        ContentLength: request.size,
       }),
-      { expiresIn: UPLOAD_URL_EXPIRES_IN_SECONDS },
+      {
+        expiresIn: UPLOAD_URL_EXPIRES_IN_SECONDS,
+        // Without this the signature only covers the host: the URL would
+        // accept any type (an HTML page, an SVG with a script) and any size
+        // into the public bucket.
+        signableHeaders: new Set(["content-type", "content-length"]),
+      },
     );
 
     return { key, url, uploadUrl };

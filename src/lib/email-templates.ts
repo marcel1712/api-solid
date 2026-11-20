@@ -267,3 +267,53 @@ export function orgRejectedEmail(
     ].join("\n"),
   };
 }
+
+export interface OrgFieldChange {
+  /** As the team reads it: "WhatsApp", "Nome". */
+  label: string;
+  before: string;
+  after: string;
+}
+
+/**
+ * To the review team, when an org that's already approved changes how people
+ * reach it. Swapping the WhatsApp after approval is how an adoption scam
+ * would work, so a person should look at each change.
+ */
+export function approvedOrgChangedEmail(
+  orgName: string,
+  changes: OrgFieldChange[],
+  adminUrl: string,
+): EmailContent {
+  const intro = `A ONG “${orgName}”, já aprovada, alterou dados que aparecem para quem quer adotar. Confira se a mudança faz sentido:`;
+  const summary = changes
+    .map((change) => `${change.label}: ${change.before} → ${change.after}`)
+    .join("\n");
+  const next =
+    "Se parecer golpe, o painel de admin permite corrigir os dados ou remover a ONG.";
+
+  return {
+    subject: `ONG aprovada alterou seus dados: ${orgName}`,
+    html: layout({
+      preheader: "Uma ONG aprovada mudou o contato ou o nome.",
+      title: "Dados de ONG aprovada alterados",
+      paragraphs: [intro],
+      highlight: summary,
+      action: { label: "Abrir o painel de admin", url: adminUrl },
+      ignoreNote: next,
+    }),
+    text: [
+      "Dados de ONG aprovada alterados",
+      "",
+      intro,
+      "",
+      summary,
+      "",
+      next,
+      "",
+      `Abrir o painel de admin: ${adminUrl}`,
+      "",
+      "Tailhop · Conectando pets a famílias",
+    ].join("\n"),
+  };
+}

@@ -1,7 +1,10 @@
 import { Resend } from "resend";
 import { Mailer } from "@/lib/mailer";
+import { OrgChangeNotifier } from "@/use-cases/updateOrgUseCase";
 import {
+  approvedOrgChangedEmail,
   EmailContent,
+  OrgFieldChange,
   orgApprovedEmail,
   orgRejectedEmail,
   passwordResetEmail,
@@ -9,7 +12,7 @@ import {
 } from "@/lib/email-templates";
 import env from "@/env/env";
 
-export class ResendMailer implements Mailer {
+export class ResendMailer implements Mailer, OrgChangeNotifier {
   private resend = new Resend(env.RESEND_API_KEY);
 
   // The SDK doesn't throw on a refused send (bad key, unverified domain,
@@ -57,6 +60,23 @@ export class ResendMailer implements Mailer {
     dashboardUrl: string;
   }): Promise<void> {
     await this.send(to, orgApprovedEmail(orgName, dashboardUrl));
+  }
+
+  async notifyApprovedOrgChanged({
+    orgName,
+    changes,
+  }: {
+    orgName: string;
+    changes: OrgFieldChange[];
+  }): Promise<void> {
+    const content = approvedOrgChangedEmail(
+      orgName,
+      changes,
+      `${env.FRONTEND_URL}/admin`,
+    );
+    for (const admin of env.ADMIN_EMAILS) {
+      await this.send(admin, content);
+    }
   }
 
   async sendOrgRejectedEmail({

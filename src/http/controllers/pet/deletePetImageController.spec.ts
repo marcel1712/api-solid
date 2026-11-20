@@ -2,6 +2,10 @@ import { CURRENT_TERMS_VERSION } from "@/utils/terms";
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import app from "@/app";
+
+// The size is signed into the upload URL, so the declared size and the body
+// sent must match byte for byte.
+const FAKE_IMAGE = Buffer.from("fake-image-bytes");
 import { randomCnpj } from "@/test/random-cnpj";
 import { signInRegisteredOrg } from "@/test/sign-in-registered-org";
 
@@ -16,7 +20,7 @@ async function createOrg() {
     payload: {
       name: "Pet Friends",
       email: `${randomUUID()}@email.com`,
-      password: "password123",
+      password: "Patas!Felizes7",
       whatsapp: randomWhatsapp(),
       city: "São Carlos",
       address: "Rua das Flores, 900",
@@ -50,13 +54,13 @@ async function uploadAndConfirmImage(token: string, petId: string) {
     method: "POST",
     url: `/pets/${petId}/images`,
     headers: { authorization: `Bearer ${token}` },
-    payload: { contentType: "image/jpeg" },
+    payload: { contentType: "image/jpeg", size: FAKE_IMAGE.length },
   });
   const { key, uploadUrl } = requestResponse.json();
 
   await fetch(uploadUrl, {
     method: "PUT",
-    body: Buffer.from("fake-image-bytes"),
+    body: FAKE_IMAGE,
     headers: { "Content-Type": "image/jpeg" },
   });
 
@@ -112,7 +116,7 @@ describe("Delete Pet Image Controller (e2e)", () => {
       method: "POST",
       url: `/pets/${pet.id}/images`,
       headers: { authorization: `Bearer ${org.token}` },
-      payload: { contentType: "image/jpeg" },
+      payload: { contentType: "image/jpeg", size: FAKE_IMAGE.length },
     });
 
     expect(response.statusCode).toEqual(201);
