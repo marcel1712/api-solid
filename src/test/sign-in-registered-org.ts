@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 export async function signInRegisteredOrg<T extends { id: string; email: string }>(
   app: FastifyInstance,
   org: T,
-  { password = "password123", approved = true } = {},
+  { password = "Patas!Felizes7", approved = true } = {},
 ): Promise<T & { token: string }> {
   await prisma.org.update({
     where: { id: org.id },

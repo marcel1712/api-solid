@@ -3,6 +3,11 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { makeUpdateOrgUseCase } from "@/use-cases/factories/make-update-org-use-case";
 import { normalizeWhatsapp } from "@/utils/normalize-whatsapp";
+import {
+  addressSchema,
+  citySchema,
+  orgNameSchema,
+} from "@/http/utils/schemas";
 
 export async function updateOrgController(
   request: FastifyRequest,
@@ -13,14 +18,14 @@ export async function updateOrgController(
   });
 
   const updateOrgBodyScheme = z.object({
-    name: z.string().trim().min(1).optional(),
+    name: orgNameSchema.optional(),
     whatsapp: z
       .string()
       .transform(normalizeWhatsapp)
       .pipe(z.string().e164())
       .optional(),
-    city: z.string().trim().min(1).optional(),
-    address: z.string().trim().min(1).optional(),
+    city: citySchema.optional(),
+    address: addressSchema.optional(),
   });
 
   const { id } = updateOrgParamsScheme.parse(request.params);

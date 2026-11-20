@@ -27,7 +27,7 @@ async function createOrg() {
     payload: {
       name: "Pet Friends",
       email,
-      password: "password123",
+      password: "Patas!Felizes7",
       whatsapp: randomWhatsapp(),
       city: "São Carlos",
       address: "Rua das Flores, 900",
@@ -75,7 +75,7 @@ describe("Reset Password Controller (e2e)", () => {
     const response = await app.inject({
       method: "POST",
       url: "/orgs/password/reset",
-      payload: { token, password: "new-password123" },
+      payload: { token, password: "Novo#Lar2paw" },
     });
 
     expect(response.statusCode).toEqual(200);
@@ -83,7 +83,7 @@ describe("Reset Password Controller (e2e)", () => {
     const loginResponse = await app.inject({
       method: "POST",
       url: "/orgs/sessions",
-      payload: { email: org.email, password: "new-password123" },
+      payload: { email: org.email, password: "Novo#Lar2paw" },
     });
 
     expect(loginResponse.statusCode).toEqual(200);
@@ -98,13 +98,13 @@ describe("Reset Password Controller (e2e)", () => {
     await app.inject({
       method: "POST",
       url: "/orgs/password/reset",
-      payload: { token, password: "new-password123" },
+      payload: { token, password: "Novo#Lar2paw" },
     });
 
     const loginResponse = await app.inject({
       method: "POST",
       url: "/orgs/sessions",
-      payload: { email: org.email, password: "password123" },
+      payload: { email: org.email, password: "Patas!Felizes7" },
     });
 
     expect(loginResponse.statusCode).toEqual(400);
@@ -119,13 +119,13 @@ describe("Reset Password Controller (e2e)", () => {
     await app.inject({
       method: "POST",
       url: "/orgs/password/reset",
-      payload: { token, password: "new-password123" },
+      payload: { token, password: "Novo#Lar2paw" },
     });
 
     const response = await app.inject({
       method: "POST",
       url: "/orgs/password/reset",
-      payload: { token, password: "another-password" },
+      payload: { token, password: "Outro#Lar9wave" },
     });
 
     expect(response.statusCode).toEqual(400);
@@ -137,7 +137,7 @@ describe("Reset Password Controller (e2e)", () => {
     const response = await app.inject({
       method: "POST",
       url: "/orgs/password/reset",
-      payload: { token: "invalid-token", password: "new-password123" },
+      payload: { token: "invalid-token", password: "Novo#Lar2paw" },
     });
 
     expect(response.statusCode).toEqual(400);

@@ -1,14 +1,19 @@
 import { makeRegisterPetUseCase } from "@/use-cases/factories/make-register-pet-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import {
+  petAgeSchema,
+  petBioSchema,
+  petNameSchema,
+} from "@/http/utils/schemas";
 
 export async function registerPetController(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
   const createPetBodyScheme = z.object({
-    name: z.string(),
-    age: z.int(),
+    name: petNameSchema,
+    age: petAgeSchema,
     size: z.literal(["Small", "Medium", "Large"]),
     type: z.literal([
       "Dog",
@@ -21,7 +26,7 @@ export async function registerPetController(
       "Ferret",
       "Chinchilla",
     ]),
-    bio: z.string().optional(),
+    bio: petBioSchema.optional(),
   });
 
   const { name, age, size, type, bio } = createPetBodyScheme.parse(

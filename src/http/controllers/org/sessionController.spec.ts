@@ -12,7 +12,7 @@ async function signIn() {
     payload: {
       name: "Pet Friends",
       email: `${randomUUID()}@email.com`,
-      password: "password123",
+      password: "Patas!Felizes7",
       whatsapp: `+551199${Math.floor(1000000 + Math.random() * 8999999)}`,
       city: "São Carlos",
       address: "Rua das Flores, 900",
@@ -27,7 +27,7 @@ async function signIn() {
   const login = await app.inject({
     method: "POST",
     url: "/orgs/sessions",
-    payload: { email: org.email, password: "password123" },
+    payload: { email: org.email, password: "Patas!Felizes7" },
   });
 
   const cookie = login.cookies.find((item) => item.name === "refreshToken");

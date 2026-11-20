@@ -2,6 +2,8 @@ import { makeAuthenticateOrgUseCase } from "@/use-cases/factories/make-authentic
 import { makeCreateSessionUseCase } from "@/use-cases/factories/make-create-session-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { emailSchema } from "@/http/utils/schemas";
+import { MAX_PASSWORD_LENGTH } from "@/utils/password-policy";
 import { generateAccessToken } from "@/http/utils/generate-access-token";
 import {
   REFRESH_TOKEN_COOKIE,
@@ -13,8 +15,10 @@ export async function authenticateOrgController(
   reply: FastifyReply,
 ) {
   const authenticateOrgBodyScheme = z.object({
-    email: z.string().email(),
-    password: z.string().min(6).max(100),
+    email: emailSchema,
+    // No strength rules here: accounts from before the policy must still get
+    // in. The upper bound only keeps bcrypt from hashing megabytes.
+    password: z.string().min(1).max(MAX_PASSWORD_LENGTH),
   });
 
   const { email, password } = authenticateOrgBodyScheme.parse(request.body);

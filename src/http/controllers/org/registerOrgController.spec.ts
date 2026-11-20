@@ -25,7 +25,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         address: "Rua das Flores, 900",
@@ -56,7 +56,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         address: "Rua das Flores, 900",
@@ -84,7 +84,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         address: "Rua das Flores, 900",
@@ -99,7 +99,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Other Pet Friends",
         email,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: randomWhatsapp(),
         city: "Rio de Janeiro",
         address: "Rua das Palmeiras, 456",
@@ -122,7 +122,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp,
         city: "São Carlos",
         address: "Rua das Flores, 900",
@@ -137,7 +137,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Other Pet Friends",
         email: `${randomUUID()}@email.com`,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp,
         city: "Rio de Janeiro",
         address: "Rua das Palmeiras, 456",
@@ -159,7 +159,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         address: "Rua das Flores, 900",
@@ -182,7 +182,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         address: "Rua das Flores, 900",
@@ -199,7 +199,7 @@ describe("Register Org Controller (e2e)", () => {
 
     const payload = {
       name: "Pet Friends",
-      password: "password123",
+      password: "Patas!Felizes7",
       city: "São Carlos",
       address: "Rua das Flores, 900",
     };
@@ -239,7 +239,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: randomWhatsapp(),
         city: "São Carlos",
         cnpj: randomCnpj(),
@@ -259,7 +259,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
-        password: "password123",
+        password: "Patas!Felizes7",
         city: "São Carlos",
         address: "Rua das Flores, 900",
         cnpj: randomCnpj(),
@@ -279,7 +279,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: "not-a-phone-number",
         city: "São Carlos",
         address: "Rua das Flores, 900",
@@ -302,7 +302,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: localNumber,
         city: "São Carlos",
         address: "Rua das Flores, 900",
@@ -327,7 +327,7 @@ describe("Register Org Controller (e2e)", () => {
       payload: {
         name: "Pet Friends",
         email: `${randomUUID()}@email.com`,
-        password: "password123",
+        password: "Patas!Felizes7",
         whatsapp: formatted,
         city: "São Carlos",
         address: "Rua das Flores, 900",
@@ -338,5 +338,86 @@ describe("Register Org Controller (e2e)", () => {
 
     expect(response.statusCode).toEqual(201);
     expect(response.json().whatsapp).toEqual(`+55${digits}`);
+  });
+
+  function signupPayload(overrides: Record<string, unknown> = {}) {
+    return {
+      name: "Pet Friends",
+      email: `${randomUUID()}@email.com`,
+      password: "Patas!Felizes7",
+      whatsapp: randomWhatsapp(),
+      city: "São Carlos",
+      address: "Rua das Flores, 900",
+      cnpj: randomCnpj(),
+      termsVersion: CURRENT_TERMS_VERSION,
+      ...overrides,
+    };
+  }
+
+  it.each([
+    ["empty", ""],
+    ["short", "Ab1!"],
+    ["without a symbol", "PatasFelizes7"],
+    ["a common word", "MinhaSenha!7x"],
+  ])("should refuse a password that is %s", async (_label, password) => {
+    await app.ready();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: signupPayload({ password }),
+    });
+
+    expect(response.statusCode).toEqual(400);
+    expect(response.json().issues[0].path).toEqual(["password"]);
+  });
+
+  it("should refuse a password built from the email", async () => {
+    await app.ready();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: signupPayload({
+        email: `${randomUUID()}@abrigo.org`,
+        password: "Abrigo!Feliz7",
+      }),
+    });
+
+    expect(response.statusCode).toEqual(400);
+  });
+
+  it("should refuse an oversized name", async () => {
+    await app.ready();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: signupPayload({ name: "x".repeat(121) }),
+    });
+
+    expect(response.statusCode).toEqual(400);
+  });
+
+  it("should store the email lower-cased, so case can't make a second account", async () => {
+    await app.ready();
+
+    const local = randomUUID();
+    const first = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: signupPayload({ email: `  ${local.toUpperCase()}@Email.COM ` }),
+    });
+
+    expect(first.statusCode).toEqual(201);
+    expect(first.json().email).toEqual(`${local}@email.com`);
+
+    const second = await app.inject({
+      method: "POST",
+      url: "/orgs",
+      payload: signupPayload({ email: `${local}@email.com` }),
+    });
+
+    expect(second.statusCode).toEqual(409);
   });
 });

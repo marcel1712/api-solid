@@ -16,7 +16,7 @@ async function createOrg({ approved = true } = {}) {
     payload: {
       name: "Pet Friends",
       email: `${randomUUID()}@email.com`,
-      password: "password123",
+      password: "Patas!Felizes7",
       whatsapp: randomWhatsapp(),
       city: "São Carlos",
       address: "Rua das Flores, 900",

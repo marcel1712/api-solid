@@ -1,6 +1,10 @@
 import { makeRequestPetImageUploadUseCase } from "@/use-cases/factories/make-request-pet-image-upload-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import {
+  MAX_PET_IMAGE_SIZE_BYTES,
+  PET_IMAGE_CONTENT_TYPES,
+} from "@/use-cases/requestPetImageUploadUseCase";
 
 export async function requestPetImageUploadController(
   request: FastifyRequest,
@@ -11,13 +15,14 @@ export async function requestPetImageUploadController(
   });
 
   const requestPetImageUploadBodyScheme = z.object({
-    contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+    contentType: z.enum(PET_IMAGE_CONTENT_TYPES),
+    size: z.number().int().positive().max(MAX_PET_IMAGE_SIZE_BYTES),
   });
 
   const { id: petId } = requestPetImageUploadParamsScheme.parse(
     request.params,
   );
-  const { contentType } = requestPetImageUploadBodyScheme.parse(request.body);
+  const { contentType, size } = requestPetImageUploadBodyScheme.parse(request.body);
 
   const orgId = request.orgId as string;
 
@@ -26,6 +31,7 @@ export async function requestPetImageUploadController(
     petId,
     orgId,
     contentType,
+    size,
   });
 
   return reply.status(201).send({ key, url, uploadUrl });

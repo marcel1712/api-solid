@@ -16,7 +16,7 @@ function signup(overrides: Record<string, unknown> = {}) {
     payload: {
       name: "Pet Friends",
       email: `${randomUUID()}@email.com`,
-      password: "password123",
+      password: "Patas!Felizes7",
       whatsapp: `+551199${Math.floor(1000000 + Math.random() * 8999999)}`,
       city: "São Carlos",
       address: "Rua das Flores, 900",
@@ -358,7 +358,7 @@ describe("Org verification (e2e)", () => {
       const login = await app.inject({
         method: "POST",
         url: "/orgs/sessions",
-        payload: { email: newEmail, password: "password123" },
+        payload: { email: newEmail, password: "Patas!Felizes7" },
       });
       expect(login.statusCode).toEqual(403);
     });

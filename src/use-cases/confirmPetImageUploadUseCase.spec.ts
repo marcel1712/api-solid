@@ -51,7 +51,9 @@ describe("Confirm Pet Image Upload Use Case", () => {
     petRepository = new InMemoryPetRepository();
     petImageRepository = new InMemoryPetImageRepository();
     sut = new ConfirmPetImageUploadUseCase(petRepository, petImageRepository);
-    sendMock.mockReset().mockResolvedValue({});
+    sendMock
+      .mockReset()
+      .mockResolvedValue({ ContentType: "image/jpeg", ContentLength: 1024 });
   });
 
   it("should persist the image once the upload is confirmed to exist", async () => {
@@ -133,5 +135,27 @@ describe("Confirm Pet Image Upload Use Case", () => {
         key: `pets/${pet.id}/photo.jpg`,
       }),
     ).rejects.toBeInstanceOf(LimitExceededError);
+  });
+
+  it.each([
+    ["an HTML page", { ContentType: "text/html", ContentLength: 1024 }],
+    ["an SVG", { ContentType: "image/svg+xml", ContentLength: 1024 }],
+    ["an oversized file", { ContentType: "image/jpeg", ContentLength: 9 * 1024 * 1024 }],
+    ["an empty file", { ContentType: "image/jpeg", ContentLength: 0 }],
+  ])("should refuse and delete %s", async (_label, head) => {
+    const pet = await createPet();
+    const key = `pets/${pet.id}/photo.jpg`;
+    sendMock.mockResolvedValueOnce(head);
+
+    await expect(() =>
+      sut.execute({ petId: pet.id, orgId: "org-01", key }),
+    ).rejects.toBeInstanceOf(NotAllowedError);
+
+    const deleteCall = sendMock.mock.calls.at(-1)![0];
+    expect(deleteCall.constructor.name).toEqual("DeleteObjectCommand");
+    expect(deleteCall.input).toMatchObject({ Key: key });
+    expect(
+      (petImageRepository as InMemoryPetImageRepository).items,
+    ).toHaveLength(0);
   });
 });

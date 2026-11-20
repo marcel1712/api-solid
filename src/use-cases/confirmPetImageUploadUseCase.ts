@@ -1,4 +1,9 @@
-import { HeadObjectCommand, NotFound } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  HeadObjectCommandOutput,
+  NotFound,
+} from "@aws-sdk/client-s3";
 import { PetImage } from "@prisma/client";
 import { PetRepository } from "@/repositories/pet-repository";
 import { PetImageRepository } from "@/repositories/pet-image-repository";
@@ -7,6 +12,10 @@ import { NotAllowedError } from "@/use-cases/errors/not-allowed-error";
 import { LimitExceededError } from "@/use-cases/errors/limit-exceeded-error";
 import { r2 } from "@/lib/r2";
 import env from "@/env/env";
+import {
+  MAX_PET_IMAGE_SIZE_BYTES,
+  PET_IMAGE_CONTENT_TYPES,
+} from "@/use-cases/requestPetImageUploadUseCase";
 
 const MAX_IMAGES_PER_PET = 3;
 
@@ -47,8 +56,9 @@ export class ConfirmPetImageUploadUseCase {
       );
     }
 
+    let head: HeadObjectCommandOutput;
     try {
-      await r2.send(
+      head = await r2.send(
         new HeadObjectCommand({
           Bucket: env.R2_BUCKET_NAME,
           Key: request.key,
@@ -59,6 +69,19 @@ export class ConfirmPetImageUploadUseCase {
         throw new ResourceNotFoundError();
       }
       throw error;
+    }
+
+    // The signed URL already pins type and size; this is the second lock, for
+    // anything that got in another way. It's public, so it goes right away.
+    const allowedType = (PET_IMAGE_CONTENT_TYPES as readonly string[]).includes(
+      head.ContentType ?? "",
+    );
+    const size = head.ContentLength ?? 0;
+    if (!allowedType || size === 0 || size > MAX_PET_IMAGE_SIZE_BYTES) {
+      await r2.send(
+        new DeleteObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: request.key }),
+      );
+      throw new NotAllowedError();
     }
 
     const url = `${env.R2_PUBLIC_URL}/${request.key}`;

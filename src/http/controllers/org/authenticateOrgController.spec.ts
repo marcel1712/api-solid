@@ -12,7 +12,7 @@ function randomWhatsapp() {
 async function createOrg(options: { verified?: boolean } = {}) {
   const { verified = true } = options;
   const email = `${randomUUID()}@email.com`;
-  const password = "password123";
+  const password = "Patas!Felizes7";
 
   await app.inject({
     method: "POST",
@@ -99,7 +99,7 @@ describe("Authenticate Org Controller (e2e)", () => {
     const response = await app.inject({
       method: "POST",
       url: "/orgs/sessions",
-      payload: { email: `${randomUUID()}@email.com`, password: "password123" },
+      payload: { email: `${randomUUID()}@email.com`, password: "Patas!Felizes7" },
     });
 
     expect(response.statusCode).toEqual(400);
@@ -117,5 +117,19 @@ describe("Authenticate Org Controller (e2e)", () => {
     });
 
     expect(response.statusCode).toEqual(403);
+  });
+
+  it("should authenticate whatever the case the email is typed in", async () => {
+    await app.ready();
+
+    const { email, password } = await createOrg();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/orgs/sessions",
+      payload: { email: ` ${email.toUpperCase()} `, password },
+    });
+
+    expect(response.statusCode).toEqual(200);
   });
 });

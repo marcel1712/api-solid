@@ -14,7 +14,7 @@ async function createOrg() {
     payload: {
       name: "Pet Friends",
       email: `${randomUUID()}@email.com`,
-      password: "password123",
+      password: "Patas!Felizes7",
       whatsapp,
       city: "São Carlos",
       address: "Rua das Flores, 900",
@@ -134,6 +134,34 @@ describe("Register Pet Controller (e2e)", () => {
         size: "Small",
         type: "Dragon",
         bio: "A very good boy",
+      },
+    });
+
+    expect(response.statusCode).toEqual(400);
+  });
+
+  it.each([
+    ["an empty name", { name: "  " }],
+    ["an oversized name", { name: "x".repeat(61) }],
+    ["an oversized bio", { bio: "x".repeat(601) }],
+    ["a negative age", { age: -1 }],
+    ["an absurd age", { age: 2147483648 }],
+  ])("should not be able to register a pet with %s", async (_label, override) => {
+    await app.ready();
+
+    const org = await createOrg();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/pets",
+      headers: { authorization: `Bearer ${org.token}` },
+      payload: {
+        name: "Nick",
+        age: 2,
+        size: "Small",
+        type: "Dog",
+        bio: "A very good boy",
+        ...override,
       },
     });
 
