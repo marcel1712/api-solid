@@ -1,5 +1,6 @@
 import { OrgRepository } from "../repositories/org-repository";
-import { describe, it, beforeEach, expect } from "vitest";
+import { describe, it, beforeEach, expect, vi } from "vitest";
+import { OrgStatus } from "@prisma/client";
 import { UpdateOrgUseCase } from "./updateOrgUseCase";
 import { InMemoryOrgRepository } from "../repositories/in-memory/in-memory-org-repository";
 import { ResourceNotFoundError } from "./errors/resource-not-found-error";
@@ -90,5 +91,78 @@ describe("Update Org Use Case", () => {
         name: "New Pet Friends",
       }),
     ).rejects.toBeInstanceOf(NotAllowedError);
+  });
+
+  describe("when the org is already approved", () => {
+    const notify = vi.fn();
+
+    beforeEach(() => {
+      notify.mockReset().mockResolvedValue(undefined);
+      sut = new UpdateOrgUseCase(orgRepository, {
+        notifyApprovedOrgChanged: notify,
+      });
+    });
+
+    async function createApprovedOrg() {
+      const org = await createOrg();
+      await orgRepository.updateStatus(org.id, OrgStatus.Approved);
+      return org;
+    }
+
+    it("should tell the team when the WhatsApp changes", async () => {
+      const org = await createApprovedOrg();
+
+      await sut.execute({
+        orgId: org.id,
+        requesterOrgId: org.id,
+        whatsapp: "+5511988888888",
+      });
+
+      expect(notify).toHaveBeenCalledWith({
+        orgName: "Pet Friends",
+        changes: [
+          { label: "WhatsApp", before: "+5511999999999", after: "+5511988888888" },
+        ],
+      });
+    });
+
+    it("should not bother the team over the address", async () => {
+      const org = await createApprovedOrg();
+
+      await sut.execute({
+        orgId: org.id,
+        requesterOrgId: org.id,
+        address: "Av. Central, 100",
+      });
+
+      expect(notify).not.toHaveBeenCalled();
+    });
+
+    it("should keep the change when the notice can't be sent", async () => {
+      const org = await createApprovedOrg();
+      notify.mockRejectedValueOnce(new Error("Resend is down"));
+
+      const updated = await sut.execute({
+        orgId: org.id,
+        requesterOrgId: org.id,
+        name: "Outro Nome",
+      });
+
+      expect(updated.name).toEqual("Outro Nome");
+    });
+  });
+
+  it("should not notify anyone while the org is still under review", async () => {
+    const notify = vi.fn();
+    sut = new UpdateOrgUseCase(orgRepository, { notifyApprovedOrgChanged: notify });
+    const org = await createOrg();
+
+    await sut.execute({
+      orgId: org.id,
+      requesterOrgId: org.id,
+      whatsapp: "+5511988888888",
+    });
+
+    expect(notify).not.toHaveBeenCalled();
   });
 });
